@@ -12,6 +12,7 @@
 #include "AICharacter.generated.h"
 
 class USeekSteering;
+class UArrowComponent;
 
 UCLASS()
 class MPV_PRACTICAS_API AAICharacter : public APawn
@@ -37,13 +38,13 @@ public:
 		float current_angle;
 		
 	UPROPERTY()
-	USeekSteering* SeekSteering;
+	USeekSteering* SeekSteering{ nullptr };
 
 	UPROPERTY(EditAnywhere)
-		UMaterialInterface* PathMaterial;
+		UMaterialInterface* PathMaterial{ nullptr };
 
 	UPROPERTY(EditAnywhere)
-		UMaterialInterface* NavmeshMaterial;
+		UMaterialInterface* NavmeshMaterial{ nullptr };
 
 protected:
 	// Called when the game starts or when spawned
@@ -52,7 +53,7 @@ protected:
 public:	
 	
 	Params m_params;
-	
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 

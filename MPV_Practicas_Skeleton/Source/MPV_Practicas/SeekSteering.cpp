@@ -29,26 +29,28 @@ FSteeringOutput USeekSteering::GetSteering()
     return Result;
 }
 
-//void USeekSteering::DrawDebug()
-//{
-//    if (!Character)
-//    {
-//        return;
-//    }
-//
-//    //FVector Start = Character->GetActorLocation();
-//
-//    // Velocidad deseada (verde)
-//    SetArrow(
-//        Character,
-//        TEXT("seek_desired_velocity"),
-//        LastDesiredVelocity.GetSafeNormal(),
-//        LastDesiredVelocity.Size());
-//
-//    // Aceleración (rojo)
-//    SetArrow(
-//        Character,
-//        TEXT("seek_acceleration"),
-//        LastAcceleration.GetSafeNormal(),
-//        LastAcceleration.Size());
-//}
+void USeekSteering::DrawDebug()
+{
+    if (!Character)
+    {
+        return;
+    }
+    
+    //void SetArrow(const AActor * owner, const FString & arrow_name, const FVector & direction, float length)
+    
+    // Red
+    SetArrow(
+        Character,
+        TEXT("linear_velocity"),
+        LastDesiredVelocity.GetSafeNormal(),
+        LastDesiredVelocity.Length()
+    );
+
+    // Blue
+    SetArrow(
+        Character,
+        TEXT("linear_acceleration"),
+        LastAcceleration.GetSafeNormal(),
+        LastAcceleration.Length()
+    );
+}

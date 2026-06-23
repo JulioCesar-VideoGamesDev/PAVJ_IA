@@ -11,17 +11,13 @@ class USteering : public UInterface
     GENERATED_BODY()
 };
 
-/**
- * Interfaz base para cualquier comportamiento Steering.
- */
+// Interface for any Steering behaviour.
 class MPV_PRACTICAS_API ISteering
 {
     GENERATED_BODY()
 
 public:
 
-    /**
-     * Calcula la aceleración lineal y angular producida por este steering.
-     */
+    // Calculates the linear acceleration and the angular acceleration.
     virtual FSteeringOutput GetSteering() = 0;
 };

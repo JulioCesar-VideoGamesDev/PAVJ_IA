@@ -31,8 +31,9 @@ bool ReadParams(const char* filename, Params& params)
 		const FXmlNode* MyChildNode = RootNode->FindChildNode(MyChildTag);
 
 		FString value;
+		const FXmlNode* paramElem;
 
-		const FXmlNode* paramElem = MyChildNode->FindChildNode(TEXT("initial_velocity"));
+		paramElem = MyChildNode->FindChildNode(TEXT("initial_velocity"));
 		if (paramElem)
 		{
 			value = paramElem->GetAttribute("value");

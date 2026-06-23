@@ -6,13 +6,13 @@
 #include "debug/debugdraw.h"
 
 #include "SeekSteering.h"
+#include "Components/ArrowComponent.h"
 
 // Sets default values
 AAICharacter::AAICharacter()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
 }
 
 // Called when the game starts or when spawned
@@ -37,10 +37,9 @@ void AAICharacter::Tick(float DeltaTime)
 
 	SeekSteering->TargetPosition = m_params.targetPosition;
 
-	FSteeringOutput Steering =
-		SeekSteering->GetSteering();
+	FSteeringOutput Steering = SeekSteering->GetSteering();
 
-	velocity += Steering.Linear * DeltaTime;
+	velocity += Steering.Linear;
 
 	if (velocity.Length() > m_params.max_velocity)
 	{
@@ -102,6 +101,6 @@ void AAICharacter::DrawDebug()
 
 	if (SeekSteering)
 	{
-		// SeekSteering->DrawDebug();
+		SeekSteering->DrawDebug();
 	}
 }
