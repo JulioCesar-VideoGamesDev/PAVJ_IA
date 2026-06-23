@@ -7,6 +7,9 @@
 
 #include "SeekSteering.h"
 #include "ArriveSteering.h"
+
+#include "AlignSteering.h"
+
 #include "Components/ArrowComponent.h"
 
 // Sets default values
@@ -32,6 +35,10 @@ void AAICharacter::BeginPlay()
 	// ArriveSteering
 	ArriveSteering = NewObject<UArriveSteering>(this);
 	ArriveSteering->Character = this;
+
+	// AlignSteering
+	AlignSteering = NewObject<UAlignSteering>(this);
+	AlignSteering->Character = this;
 }
 
 // Called every frame
@@ -69,6 +76,24 @@ void AAICharacter::Tick(float DeltaTime)
 	SetActorLocation(
 		GetActorLocation() +
 		velocity * DeltaTime);
+
+	if (AlignSteering)
+	{
+		AlignSteering->TargetRotation = m_params.targetRotation;
+
+		Steering = AlignSteering->GetSteering();
+	}
+
+	angularVelocity += Steering.Angular;
+
+	if (angularVelocity > m_params.max_angular_velocity)
+	{
+		angularVelocity = m_params.max_angular_velocity;
+	}
+
+	SetActorRotation(
+		GetActorRotation() +
+		FRotator{ angularVelocity * DeltaTime, 0.f, 0.f });
 
 	DrawDebug();
 }

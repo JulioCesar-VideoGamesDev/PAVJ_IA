@@ -14,6 +14,8 @@
 class USeekSteering;
 class UArriveSteering;
 
+class UAlignSteering;
+
 class UArrowComponent;
 
 UCLASS()
@@ -27,6 +29,8 @@ private:
 	FVector direction = FVector::ForwardVector;
 
 	FVector velocity = FVector::ZeroVector;
+
+	float angularVelocity { 0.f };
 
 public:
 	// Sets default values for this pawn's properties
@@ -44,6 +48,9 @@ public:
 
 	UPROPERTY()
 	UArriveSteering* ArriveSteering{ nullptr };
+
+	UPROPERTY()
+	UAlignSteering* AlignSteering{ nullptr };
 
 	UPROPERTY(EditAnywhere)
 		UMaterialInterface* PathMaterial{ nullptr };
@@ -90,6 +97,11 @@ public:
 	FVector GetCurrentVelocity() const
 	{
 		return velocity;
+	}
+
+	float GetCurrentAngularVelocity() const
+	{
+		return angularVelocity;
 	}
 
 	void DrawDebug();

@@ -33,6 +33,8 @@ bool ReadParams(const char* filename, Params& params)
 		FString value;
 		const FXmlNode* paramElem;
 
+		// LINEAL ----------------------------------
+
 		paramElem = MyChildNode->FindChildNode(TEXT("initial_velocity"));
 		if (paramElem)
 		{
@@ -77,6 +79,36 @@ bool ReadParams(const char* filename, Params& params)
 			FDefaultValueHelper::ParseFloat(value, z);
 			params.targetPosition.Z = z;
 			params.targetPosition.Y = 0.0f;
+		}
+
+		// ANGULAR ----------------------------------
+
+		paramElem = MyChildNode->FindChildNode(TEXT("max_angular_velocity"));
+		if (paramElem)
+		{
+			value = paramElem->GetAttribute("value");
+			FDefaultValueHelper::ParseFloat(value, params.max_angular_velocity);
+		}
+
+		paramElem = MyChildNode->FindChildNode(TEXT("max_angular_acceleration"));
+		if (paramElem)
+		{
+			value = paramElem->GetAttribute("value");
+			FDefaultValueHelper::ParseFloat(value, params.max_angular_acceleration);
+		}
+
+		paramElem = MyChildNode->FindChildNode(TEXT("angular_arrive_radius"));
+		if (paramElem)
+		{
+			value = paramElem->GetAttribute("value");
+			FDefaultValueHelper::ParseFloat(value, params.angular_arrive_radius);
+		}
+
+		paramElem = MyChildNode->FindChildNode(TEXT("targetRotation"));
+		if (paramElem)
+		{
+			value = paramElem->GetAttribute("value");
+			FDefaultValueHelper::ParseFloat(value, params.targetRotation);
 		}
 	}
 	return true;
