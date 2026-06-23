@@ -270,6 +270,10 @@
       <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <ClInclude Include="..\..\Source\MPV_Practicas\AICharacter.h"/>
+    <ClCompile Include="..\..\Source\MPV_Practicas\ArriveSteering.cpp">
+      <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\MPV_Practicas\ArriveSteering.h"/>
     <None Include="..\..\Source\MPV_Practicas\MPV_Practicas.Build.cs"/>
     <ClCompile Include="..\..\Source\MPV_Practicas\MPV_Practicas.cpp">
       <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories)</AdditionalIncludeDirectories>

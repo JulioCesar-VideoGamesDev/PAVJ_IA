@@ -3,7 +3,7 @@
 		<initial_velocity value="0"> </initial_velocity>
 		<max_velocity value="300"> </max_velocity>
 		<max_acceleration value="50"> </max_acceleration>
-		<dest_radius value="5"> </dest_radius>
+		<dest_radius value="100"> </dest_radius>
 		<targetPosition x="40" z="30"> </targetPosition>
 	</params>
 </root>

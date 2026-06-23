@@ -12,6 +12,8 @@
 #include "AICharacter.generated.h"
 
 class USeekSteering;
+class UArriveSteering;
+
 class UArrowComponent;
 
 UCLASS()
@@ -39,6 +41,9 @@ public:
 		
 	UPROPERTY()
 	USeekSteering* SeekSteering{ nullptr };
+
+	UPROPERTY()
+	UArriveSteering* ArriveSteering{ nullptr };
 
 	UPROPERTY(EditAnywhere)
 		UMaterialInterface* PathMaterial{ nullptr };

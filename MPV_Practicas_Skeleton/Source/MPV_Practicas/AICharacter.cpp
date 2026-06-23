@@ -6,6 +6,7 @@
 #include "debug/debugdraw.h"
 
 #include "SeekSteering.h"
+#include "ArriveSteering.h"
 #include "Components/ArrowComponent.h"
 
 // Sets default values
@@ -24,20 +25,37 @@ void AAICharacter::BeginPlay()
 
 	speed = m_params.initial_velocity;
 
-	SeekSteering = NewObject<USeekSteering>(this);
+	// SeekSteering
+	//SeekSteering = NewObject<USeekSteering>(this);
+	//SeekSteering->Character = this;
 
-	SeekSteering->Character = this;
+	// ArriveSteering
+	ArriveSteering = NewObject<UArriveSteering>(this);
+	ArriveSteering->Character = this;
 }
 
 // Called every frame
 void AAICharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
 	current_angle = GetActorAngle();
 
-	SeekSteering->TargetPosition = m_params.targetPosition;
+	FSteeringOutput Steering;
 
-	FSteeringOutput Steering = SeekSteering->GetSteering();
+	if (SeekSteering)
+	{
+		SeekSteering->TargetPosition = m_params.targetPosition;
+
+		Steering = SeekSteering->GetSteering();
+	}
+
+	if (ArriveSteering)
+	{
+		ArriveSteering->TargetPosition = m_params.targetPosition;
+
+		Steering = ArriveSteering->GetSteering();
+	}
 
 	velocity += Steering.Linear;
 
@@ -102,5 +120,10 @@ void AAICharacter::DrawDebug()
 	if (SeekSteering)
 	{
 		SeekSteering->DrawDebug();
+	}
+
+	if (ArriveSteering)
+	{
+		ArriveSteering->DrawDebug();
 	}
 }
