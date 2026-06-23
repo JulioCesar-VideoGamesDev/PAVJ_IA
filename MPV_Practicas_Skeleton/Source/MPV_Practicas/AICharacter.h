@@ -11,10 +11,19 @@
 
 #include "AICharacter.generated.h"
 
+class USeekSteering;
+
 UCLASS()
 class MPV_PRACTICAS_API AAICharacter : public APawn
 {
 	GENERATED_BODY()
+private:
+
+	float speed{ 0.f };
+
+	FVector direction = FVector::ForwardVector;
+
+	FVector velocity = FVector::ZeroVector;
 
 public:
 	// Sets default values for this pawn's properties
@@ -26,6 +35,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AIChar)
 		float current_angle;
+		
+	UPROPERTY()
+	USeekSteering* SeekSteering;
 
 	UPROPERTY(EditAnywhere)
 		UMaterialInterface* PathMaterial;
@@ -37,8 +49,10 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	Params m_params;
 public:	
+	
+	Params m_params;
+	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -66,6 +80,11 @@ public:
 		return axisAngle;
 	}
 	void SetActorAngle(float angle) { FRotator newRot(angle, 0.0f, 0.0f); SetActorRotation(newRot); }
+
+	FVector GetCurrentVelocity() const
+	{
+		return velocity;
+	}
 
 	void DrawDebug();
 

@@ -46,6 +46,24 @@
     <ClInclude Include="..\..\Source\MPV_Practicas\MPV_Practicas.h">
       <Filter>Source\MPV_Practicas</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\Source\MPV_Practicas\SeekSteering.cpp">
+      <Filter>Source\MPV_Practicas</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\MPV_Practicas\SeekSteering.h">
+      <Filter>Source\MPV_Practicas</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\Source\MPV_Practicas\Steering.cpp">
+      <Filter>Source\MPV_Practicas</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\MPV_Practicas\Steering.h">
+      <Filter>Source\MPV_Practicas</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\Source\MPV_Practicas\SteeringOutput.cpp">
+      <Filter>Source\MPV_Practicas</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\MPV_Practicas\SteeringOutput.h">
+      <Filter>Source\MPV_Practicas</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\Source\MPV_Practicas\util.cpp">
       <Filter>Source\MPV_Practicas</Filter>
     </ClCompile>

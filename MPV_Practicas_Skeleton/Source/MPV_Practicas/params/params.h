@@ -6,6 +6,7 @@
 struct Params
 {
     FVector targetPosition;
+    float initial_velocity;
     float max_velocity;
     float max_acceleration;
 

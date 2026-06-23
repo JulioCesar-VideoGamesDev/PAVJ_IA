@@ -30,8 +30,17 @@ bool ReadParams(const char* filename, Params& params)
 		const FString MyChildTag("params");
 		const FXmlNode* MyChildNode = RootNode->FindChildNode(MyChildTag);
 
-		const FXmlNode* paramElem = MyChildNode->FindChildNode(TEXT("max_velocity"));
 		FString value;
+
+		const FXmlNode* paramElem = MyChildNode->FindChildNode(TEXT("initial_velocity"));
+		if (paramElem)
+		{
+			value = paramElem->GetAttribute("value");
+			FDefaultValueHelper::ParseFloat(value, params.initial_velocity);
+
+		}
+
+		paramElem = MyChildNode->FindChildNode(TEXT("max_velocity"));
 		if (paramElem)
 		{
 			value = paramElem->GetAttribute("value");

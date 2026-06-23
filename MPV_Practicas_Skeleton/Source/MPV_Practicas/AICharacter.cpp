@@ -5,6 +5,8 @@
 #include "params/params.h"
 #include "debug/debugdraw.h"
 
+#include "SeekSteering.h"
+
 // Sets default values
 AAICharacter::AAICharacter()
 {
@@ -19,6 +21,12 @@ void AAICharacter::BeginPlay()
 	Super::BeginPlay();
 
 	ReadParams("params.xml", m_params);
+
+	speed = m_params.initial_velocity;
+
+	SeekSteering = NewObject<USeekSteering>(this);
+
+	SeekSteering->Character = this;
 }
 
 // Called every frame
@@ -26,6 +34,24 @@ void AAICharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	current_angle = GetActorAngle();
+
+	SeekSteering->TargetPosition = m_params.targetPosition;
+
+	FSteeringOutput Steering =
+		SeekSteering->GetSteering();
+
+	velocity += Steering.Linear * DeltaTime;
+
+	if (velocity.Length() > m_params.max_velocity)
+	{
+		velocity =
+			velocity.GetSafeNormal() *
+			m_params.max_velocity;
+	}
+
+	SetActorLocation(
+		GetActorLocation() +
+		velocity * DeltaTime);
 
 	DrawDebug();
 }
@@ -73,4 +99,9 @@ void AAICharacter::DrawDebug()
 		{ FVector(100.f, 0.f, 0.f), FVector(200.f, 0.f, 0.f), FVector(200.f, 0.f, 100.0f) }
 	};
 	SetPolygons(this, TEXT("navmesh"), TEXT("mesh"), Polygons, NavmeshMaterial);
+
+	if (SeekSteering)
+	{
+		// SeekSteering->DrawDebug();
+	}
 }

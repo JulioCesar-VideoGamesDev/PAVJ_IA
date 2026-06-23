@@ -267,6 +267,18 @@
       <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <ClInclude Include="..\..\Source\MPV_Practicas\MPV_Practicas.h"/>
+    <ClCompile Include="..\..\Source\MPV_Practicas\SeekSteering.cpp">
+      <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\MPV_Practicas\SeekSteering.h"/>
+    <ClCompile Include="..\..\Source\MPV_Practicas\Steering.cpp">
+      <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\MPV_Practicas\Steering.h"/>
+    <ClCompile Include="..\..\Source\MPV_Practicas\SteeringOutput.cpp">
+      <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\MPV_Practicas\SteeringOutput.h"/>
     <ClCompile Include="..\..\Source\MPV_Practicas\util.cpp">
       <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
