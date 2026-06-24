@@ -19,13 +19,13 @@ FSteeringOutput USeekSteering::GetSteering()
         Direction.Normalize();
     }
 
-    LastDesiredVelocity = Direction * Character->m_params.max_velocity;
+    LastDesiredVelocity = Direction * Character->GetParams().max_velocity;
 
     Result.Linear = LastDesiredVelocity - Character->GetCurrentVelocity();
     
     // Now that I have my desired velocity, I normalize it and multiply it by my acceleration.
     Result.Linear.Normalize();
-    Result.Linear *= Character->m_params.max_acceleration;
+    Result.Linear *= Character->GetParams().max_acceleration;
 
     LastAcceleration = Result.Linear;
 

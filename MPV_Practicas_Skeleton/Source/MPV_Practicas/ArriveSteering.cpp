@@ -20,13 +20,13 @@ FSteeringOutput UArriveSteering::GetSteering()
         Direction.Normalize();
     }
 
-    if (Distance > Character->m_params.arrive_radius) // Not arriving yet.
+    if (Distance > Character->GetParams().arrive_radius) // Not arriving yet.
     {
-        LastDesiredVelocity = Direction * Character->m_params.max_velocity;
+        LastDesiredVelocity = Direction * Character->GetParams().max_velocity;
     }
     else
     {
-        float targetSpeed = (Character->m_params.max_velocity * Distance) / Character->m_params.arrive_radius;
+        float targetSpeed = (Character->GetParams().max_velocity * Distance) / Character->GetParams().arrive_radius;
         LastDesiredVelocity = Direction * targetSpeed;
         UE_LOG(LogTemp, Warning, TEXT("ARRIVING"));
     }
@@ -35,7 +35,7 @@ FSteeringOutput UArriveSteering::GetSteering()
 
     // Now that I have my desired velocity, I normalize it and multiply it by my acceleration.
     Result.Linear.Normalize();
-    Result.Linear *= Character->m_params.max_acceleration;
+    Result.Linear *= Character->GetParams().max_acceleration;
 
     LastAcceleration = Result.Linear;
 
