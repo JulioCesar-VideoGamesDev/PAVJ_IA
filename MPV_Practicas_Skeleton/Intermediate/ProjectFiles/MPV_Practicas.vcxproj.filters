@@ -43,6 +43,12 @@
     <ClInclude Include="..\..\Source\MPV_Practicas\AlignSteering.h">
       <Filter>Source\MPV_Practicas</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\Source\MPV_Practicas\AlignToMovementSteering.cpp">
+      <Filter>Source\MPV_Practicas</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\MPV_Practicas\AlignToMovementSteering.h">
+      <Filter>Source\MPV_Practicas</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\Source\MPV_Practicas\ArriveSteering.cpp">
       <Filter>Source\MPV_Practicas</Filter>
     </ClCompile>
