@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <None Include="..\..\MPV_Practicas.uproject" />
+    <Filter Include="Source">
+      <UniqueIdentifier>{F31BBDD1-B3E8-3BCC-9652-680E16935819}</UniqueIdentifier>
+    </Filter>
+    <None Include="..\..\Source\MPV_Practicas.Target.cs">
+      <Filter>Source</Filter>
+    </None>
+    <None Include="..\..\Source\MPV_PracticasEditor.Target.cs">
+      <Filter>Source</Filter>
+    </None>
+    <None Include="..\..\.gitignore" />
+    <None Include="..\..\.vsconfig" />
+    <Filter Include="Config">
+      <UniqueIdentifier>{FA535FFB-25E1-3D20-B416-52F9BE21E06E}</UniqueIdentifier>
+    </Filter>
+    <None Include="..\..\Config\DefaultEditor.ini">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="..\..\Config\DefaultEngine.ini">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="..\..\Config\DefaultGame.ini">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="..\..\Config\DefaultInput.ini">
+      <Filter>Config</Filter>
+    </None>
+    <Filter Include="Source\MPV_Practicas">
+      <UniqueIdentifier>{B31AFCF3-F4B4-38FD-BF7B-BCC607BC508A}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\MPV_Practicas\AICharacter.cpp">
+      <Filter>Source\MPV_Practicas</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\MPV_Practicas\AICharacter.h">
+      <Filter>Source\MPV_Practicas</Filter>
+    </ClInclude>
+    <None Include="..\..\Source\MPV_Practicas\MPV_Practicas.Build.cs">
+      <Filter>Source\MPV_Practicas</Filter>
+    </None>
+    <ClCompile Include="..\..\Source\MPV_Practicas\MPV_Practicas.cpp">
+      <Filter>Source\MPV_Practicas</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\MPV_Practicas\MPV_Practicas.h">
+      <Filter>Source\MPV_Practicas</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\Source\MPV_Practicas\util.cpp">
+      <Filter>Source\MPV_Practicas</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\MPV_Practicas\util.h">
+      <Filter>Source\MPV_Practicas</Filter>
+    </ClInclude>
+    <Filter Include="Source\MPV_Practicas\debug">
+      <UniqueIdentifier>{4E74FEF0-606D-3740-8000-52ABF1E64563}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\MPV_Practicas\debug\debugdraw.cpp">
+      <Filter>Source\MPV_Practicas\debug</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\MPV_Practicas\debug\debugdraw.h">
+      <Filter>Source\MPV_Practicas\debug</Filter>
+    </ClInclude>
+    <Filter Include="Source\MPV_Practicas\params">
+      <UniqueIdentifier>{A1EE9A3E-A73D-3CF1-865E-71C726A6464A}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\MPV_Practicas\params\params.cpp">
+      <Filter>Source\MPV_Practicas\params</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\MPV_Practicas\params\params.h">
+      <Filter>Source\MPV_Practicas\params</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
