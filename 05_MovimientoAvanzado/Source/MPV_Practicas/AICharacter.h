@@ -4,11 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
-#include "params/params.h"
 #include "GameFramework/PlayerController.h"
 #include "util.h"
-
-
+#include "params/params.h"
+#include "paths/paths.h"
 #include "AICharacter.generated.h"
 
 UCLASS()
@@ -38,6 +37,19 @@ protected:
 	virtual void BeginPlay() override;
 
 	Params m_params;
+
+	Paths m_paths;
+
+protected:
+
+	TArray<FVector> PathPoints;
+
+	FVector ClosestPoint;
+	FVector SeekPoint;
+	FVector PredictedPoint;
+
+	FVector Velocity = FVector::ZeroVector;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -69,4 +81,9 @@ public:
 
 	void DrawDebug();
 
+	FVector GetClosestPointOnSegment(const FVector& P, const FVector& A, const FVector& B);
+	int GetClosestPathPoint(const FVector& Position, FVector& OutPoint);
+	FVector GetLookAheadPoint(int Segment, const FVector& StartPoint, float DistanceAhead);
+
+	void PathFollowing(float DeltaTime);
 };

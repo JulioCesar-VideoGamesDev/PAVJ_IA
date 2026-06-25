@@ -2,7 +2,6 @@
 
 
 #include "AICharacter.h"
-#include "params/params.h"
 #include "debug/debugdraw.h"
 
 // Sets default values
@@ -19,6 +18,8 @@ void AAICharacter::BeginPlay()
 	Super::BeginPlay();
 
 	ReadParams("params.xml", m_params);
+
+	ReadPaths("paths.xml", m_paths);
 }
 
 // Called every frame
@@ -26,6 +27,8 @@ void AAICharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	current_angle = GetActorAngle();
+
+	PathFollowing(DeltaTime);
 
 	DrawDebug();
 }
@@ -53,16 +56,16 @@ void AAICharacter::OnClickedRight(const FVector& mousePosition)
 
 void AAICharacter::DrawDebug()
 {
-	TArray<FVector> Points =
+	/*TArray<FVector> Points =
 	{
 		FVector(0.f, 0.f, 0.f),
 		FVector(100.f, 0.f, 0.f),
 		FVector(100.f, 0.f, 100.f),
 		FVector(100.f, 0.f, 100.f),
 		FVector(0.f, 0.f, 100.f)
-	};
+	};*/
 
-	SetPath(this, TEXT("follow_path"), TEXT("path"), Points, 5.0f, PathMaterial);
+	SetPath(this, TEXT("follow_path"), TEXT("path"), PathPoints, 5.0f, PathMaterial);
 
 	SetCircle(this, TEXT("targetPosition"), m_params.targetPosition, 20.0f);
 	FVector dir(cos(FMath::DegreesToRadians(m_params.targetRotation)), 0.0f, sin(FMath::DegreesToRadians(m_params.targetRotation)));
@@ -73,4 +76,138 @@ void AAICharacter::DrawDebug()
 		{ FVector(100.f, 0.f, 0.f), FVector(200.f, 0.f, 0.f), FVector(200.f, 0.f, 100.0f) }
 	};
 	SetPolygons(this, TEXT("navmesh"), TEXT("mesh"), Polygons, NavmeshMaterial);
+
+	SetCircle(
+		this,
+		TEXT("closest"),
+		ClosestPoint,
+		10.f);
+
+	SetCircle(
+		this,
+		TEXT("seek"),
+		SeekPoint,
+		15.f);
+}
+
+FVector AAICharacter::GetClosestPointOnSegment(
+	const FVector& P,
+	const FVector& A,
+	const FVector& B)
+{
+	FVector AB = B - A;
+
+	float t =
+		FVector::DotProduct(P - A, AB) /
+		FVector::DotProduct(AB, AB);
+
+	t = FMath::Clamp(t, 0.f, 1.f);
+
+	return A + AB * t;
+}
+
+int AAICharacter::GetClosestPathPoint(
+	const FVector& Position,
+	FVector& OutPoint)
+{
+	float BestDistance = FLT_MAX;
+	int BestSegment = 0;
+
+	for (int i = 0; i < PathPoints.Num() - 1; i++)
+	{
+		FVector Projection =
+			GetClosestPointOnSegment(
+				Position,
+				PathPoints[i],
+				PathPoints[i + 1]);
+
+		float Dist =
+			FVector::DistSquared(Position, Projection);
+
+		if (Dist < BestDistance)
+		{
+			BestDistance = Dist;
+			BestSegment = i;
+			OutPoint = Projection;
+		}
+	}
+
+	return BestSegment;
+}
+
+FVector AAICharacter::GetLookAheadPoint(
+	int Segment,
+	const FVector& StartPoint,
+	float DistanceAhead)
+{
+	FVector CurrentPoint = StartPoint;
+
+	int CurrentSegment = Segment;
+
+	while (CurrentSegment < PathPoints.Num() - 1)
+	{
+		FVector EndPoint =
+			PathPoints[CurrentSegment + 1];
+
+		float SegmentLength =
+			FVector::Dist(CurrentPoint, EndPoint);
+
+		if (DistanceAhead <= SegmentLength)
+		{
+			FVector Dir =
+				(EndPoint - CurrentPoint).GetSafeNormal();
+
+			return CurrentPoint +
+				Dir * DistanceAhead;
+		}
+
+		DistanceAhead -= SegmentLength;
+
+		CurrentPoint = EndPoint;
+
+		CurrentSegment++;
+	}
+
+	return PathPoints.Last();
+}
+
+void AAICharacter::PathFollowing(float DeltaTime)
+{
+	FVector Position = GetActorLocation();
+
+	int Segment =
+		GetClosestPathPoint(Position, ClosestPoint);
+
+	SeekPoint =
+		GetLookAheadPoint(
+			Segment,
+			ClosestPoint,
+			m_params.look_ahead);
+
+	FVector DesiredVelocity =
+		(SeekPoint - Position).GetSafeNormal()
+		* m_params.max_velocity;
+
+	FVector Steering =
+		DesiredVelocity - Velocity;
+
+	if (Steering.Size() >
+		m_params.max_acceleration)
+	{
+		Steering =
+			Steering.GetSafeNormal()
+			* m_params.max_acceleration;
+	}
+
+	Velocity += Steering * DeltaTime;
+
+	if (Velocity.Size() > m_params.max_velocity)
+	{
+		Velocity =
+			Velocity.GetSafeNormal()
+			* m_params.max_velocity;
+	}
+
+	SetActorLocation(
+		Position + Velocity * DeltaTime);
 }

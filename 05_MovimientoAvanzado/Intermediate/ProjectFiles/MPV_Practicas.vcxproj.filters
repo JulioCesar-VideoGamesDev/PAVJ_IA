@@ -70,5 +70,14 @@
     <ClInclude Include="..\..\Source\MPV_Practicas\params\params.h">
       <Filter>Source\MPV_Practicas\params</Filter>
     </ClInclude>
+    <Filter Include="Source\MPV_Practicas\paths">
+      <UniqueIdentifier>{134A43C8-E651-3F0F-8584-DE11B5031258}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\MPV_Practicas\paths\paths.cpp">
+      <Filter>Source\MPV_Practicas\paths</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\MPV_Practicas\paths\paths.h">
+      <Filter>Source\MPV_Practicas\paths</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
