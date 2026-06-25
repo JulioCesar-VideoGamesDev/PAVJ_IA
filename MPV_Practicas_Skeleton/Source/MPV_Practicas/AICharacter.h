@@ -15,6 +15,7 @@ class USeekSteering;
 class UArriveSteering;
 
 class UAlignSteering;
+class UAlignToMovementSteering;
 
 class UArrowComponent;
 
@@ -51,6 +52,9 @@ public:
 
 	UPROPERTY()
 	UAlignSteering* AlignSteering{ nullptr };
+	
+	UPROPERTY()
+	UAlignToMovementSteering* AlignToMovementSteering{ nullptr };
 
 	UPROPERTY(EditAnywhere)
 		UMaterialInterface* PathMaterial{ nullptr };

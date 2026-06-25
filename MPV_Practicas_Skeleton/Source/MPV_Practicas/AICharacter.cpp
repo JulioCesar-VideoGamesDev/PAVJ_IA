@@ -9,6 +9,7 @@
 #include "ArriveSteering.h"
 
 #include "AlignSteering.h"
+#include "AlignToMovementSteering.h"
 
 #include "Components/ArrowComponent.h"
 
@@ -37,8 +38,12 @@ void AAICharacter::BeginPlay()
 	ArriveSteering->Character = this;
 
 	// AlignSteering
-	AlignSteering = NewObject<UAlignSteering>(this);
-	AlignSteering->Character = this;
+	//AlignSteering = NewObject<UAlignSteering>(this);
+	//AlignSteering->Character = this;
+
+	// AlignDelegate
+	AlignToMovementSteering = NewObject<UAlignToMovementSteering>(this);
+	AlignToMovementSteering->Character = this;
 }
 
 // Called every frame
@@ -77,11 +82,18 @@ void AAICharacter::Tick(float DeltaTime)
 		GetActorLocation() +
 		velocity * DeltaTime);
 
+	// ANGULAR-------------------
+
 	if (AlignSteering)
 	{
 		AlignSteering->TargetRotation = m_params.targetRotation;
 
 		Steering = AlignSteering->GetSteering();
+	}
+
+	if (AlignToMovementSteering)
+	{
+		Steering = AlignToMovementSteering->GetSteering();
 	}
 
 	angularVelocity += Steering.Angular;

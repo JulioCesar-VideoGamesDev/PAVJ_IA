@@ -5,46 +5,49 @@ FSteeringOutput UAlignSteering::GetSteering()
 {
     FSteeringOutput Result;
 
-	float fTargetAngleRad = FMath::DegreesToRadians(Character->GetParams().targetRotation);
+    const float CurrentAngle = Character->GetActorAngle();
 
-	float fCurrentAgleRad = FMath::DegreesToRadians(Character->GetActorAngle());
+    // Diferencia angular mínima [-180,180]
+    float DesiredRotation =
+        FMath::FindDeltaAngleDegrees(
+            CurrentAngle,
+            TargetRotation);
 
-	float fDesiredRotationRad = fTargetAngleRad - fCurrentAgleRad;
+    // Ya estamos orientados
+    if (FMath::Abs(DesiredRotation) < KINDA_SMALL_NUMBER)
+    {
+        Result.Linear = FVector::ZeroVector;
+        Result.Angular = 0.f;
+        return Result;
+    }
 
-	if (fDesiredRotationRad < -PI)
-	{
-		fDesiredRotationRad = fDesiredRotationRad + (2 * PI);
-	}
-	else if (fDesiredRotationRad > PI)
-	{
-		fDesiredRotationRad = fDesiredRotationRad - (2 * PI);
-	}
+    float TargetAngularVelocity =
+        (DesiredRotation < 0.f ? -1.f : 1.f) *
+        Character->GetParams().max_angular_velocity;
 
-	float fDesiredRotationDeg = FMath::RadiansToDegrees(fDesiredRotationRad);
+    // Frenado al acercarse al objetivo
+    if (FMath::Abs(DesiredRotation) <
+        Character->GetParams().angular_arrive_radius)
+    {
+        const float Ratio =
+            FMath::Abs(DesiredRotation) /
+            Character->GetParams().angular_arrive_radius;
 
-	if (fDesiredRotationDeg > Character->GetParams().max_angular_velocity)
-	{
-		fDesiredRotationDeg = Character->GetParams().max_angular_velocity;
-	}
-	else if (fDesiredRotationDeg < -Character->GetParams().max_angular_velocity)
-	{
-		fDesiredRotationDeg = -Character->GetParams().max_angular_velocity;
-	}
+        TargetAngularVelocity *= Ratio;
+    }
 
-	float fObjetiveAngularVelocity = (fDesiredRotationDeg < 0 ? -1 : 1) * Character->GetParams().max_angular_velocity;
+    // Aceleración angular necesaria
+    Result.Angular =
+        TargetAngularVelocity -
+        Character->GetCurrentAngularVelocity();
 
-	if (fDesiredRotationDeg < Character->GetParams().angular_arrive_radius)
-	{
-		float fLimiter = (fDesiredRotationDeg / Character->GetParams().angular_arrive_radius);
-		fLimiter = fLimiter < 0 ? -fLimiter : fLimiter;
+    // Limitar aceleración angular
+    Result.Angular = FMath::Clamp(
+        Result.Angular,
+        -Character->GetParams().max_angular_acceleration,
+        Character->GetParams().max_angular_acceleration);
 
-		float fSteeringMagnitude = Character->GetParams().max_angular_velocity * fLimiter;
-		fObjetiveAngularVelocity = (fDesiredRotationDeg < 0 ? -1 : 1) * fSteeringMagnitude;
-	}
-
-	Result.Angular = fObjetiveAngularVelocity - Character->GetCurrentAngularVelocity();
-
-    Result.Linear = FVector::Zero();
+    Result.Linear = FVector::ZeroVector;
 
     return Result;
 }

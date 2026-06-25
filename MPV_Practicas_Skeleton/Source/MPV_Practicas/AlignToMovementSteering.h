@@ -7,6 +7,7 @@
 #include "AlignToMovementSteering.generated.h"
 
 class AAICharacter;
+class UAlignSteering;
 
 UCLASS()
 class MPV_PRACTICAS_API UAlignToMovementSteering : public UObject, public ISteering
@@ -23,5 +24,6 @@ public:
     virtual FSteeringOutput GetSteering() override;
 
 private:
+    UPROPERTY()
     UAlignSteering* AlignDelegate;
 };

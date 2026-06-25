@@ -1,23 +1,34 @@
 #include "AlignToMovementSteering.h"
+#include "AlignSteering.h"
 #include "AICharacter.h"
 
 FSteeringOutput UAlignToMovementSteering::GetSteering()
 {
-	FSteeringOutput Result;
+    if (!Character)
+    {
+        return FSteeringOutput();
+    }
 
-	FVector Velocity = Character->GetVelocity();
+    if (!AlignDelegate)
+    {
+        AlignDelegate = NewObject<UAlignSteering>(this);
+        AlignDelegate->Character = Character;
+    }
 
-	if (Velocity.SizeSquared() < KINDA_SMALL_NUMBER)
-	{
-		return FSteeringOutput();
-	}
+    const FVector Velocity = Character->GetCurrentVelocity();
 
-	float TargetAngle =
-		FMath::RadiansToDegrees(
-			FMath::Atan2(Velocity.Y, Velocity.X)
-		);
+    if (Velocity.SizeSquared() < KINDA_SMALL_NUMBER)
+    {
+        return FSteeringOutput();
+    }
 
-	//Character->GetParams().targetRotation = TargetAngle;
+    const float TargetAngle =
+        FMath::RadiansToDegrees(
+            FMath::Atan2(Velocity.Y, Velocity.X)
+        );
 
-	return AlignDelegate->GetSteering();
+    AlignDelegate->Character = Character;
+    AlignDelegate->TargetRotation = TargetAngle;
+
+    return AlignDelegate->GetSteering();
 }
