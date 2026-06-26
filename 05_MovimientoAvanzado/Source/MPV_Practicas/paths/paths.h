@@ -6,6 +6,8 @@
 struct Paths
 {
     TArray<FVector> PathPoints;
+
+    TArray<FVector> GetPathPoints() { return PathPoints; }
 };
 
 bool ReadPaths(const char* filename, Paths& paths);

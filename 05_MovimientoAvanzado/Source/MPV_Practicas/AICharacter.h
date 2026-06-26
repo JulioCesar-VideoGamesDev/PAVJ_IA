@@ -10,6 +10,8 @@
 #include "paths/paths.h"
 #include "AICharacter.generated.h"
 
+class USeekSteering;
+
 UCLASS()
 class MPV_PRACTICAS_API AAICharacter : public APawn
 {
@@ -32,6 +34,16 @@ public:
 	UPROPERTY(EditAnywhere)
 		UMaterialInterface* NavmeshMaterial;
 
+private:
+
+	float speed{ 0.f };
+
+	FVector direction = FVector::ForwardVector;
+
+	FVector velocity = FVector::ZeroVector;
+
+	float angularVelocity{ 0.f };
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -39,6 +51,8 @@ protected:
 	Params m_params;
 
 	Paths m_paths;
+
+	USeekSteering* SeekSteering;
 
 protected:
 
@@ -79,11 +93,21 @@ public:
 	}
 	void SetActorAngle(float angle) { FRotator newRot(angle, 0.0f, 0.0f); SetActorRotation(newRot); }
 
+	FVector GetCurrentVelocity() const
+	{
+		return velocity;
+	}
+
+	float GetCurrentAngularVelocity() const
+	{
+		return angularVelocity;
+	}
+
 	void DrawDebug();
 
 	FVector GetClosestPointOnSegment(const FVector& P, const FVector& A, const FVector& B);
 	int GetClosestPathPoint(const FVector& Position, FVector& OutPoint);
 	FVector GetLookAheadPoint(int Segment, const FVector& StartPoint, float DistanceAhead);
 
-	void PathFollowing(float DeltaTime);
+	void PathFollowing();
 };

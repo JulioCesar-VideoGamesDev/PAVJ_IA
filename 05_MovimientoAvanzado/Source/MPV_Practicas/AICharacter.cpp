@@ -3,6 +3,7 @@
 
 #include "AICharacter.h"
 #include "debug/debugdraw.h"
+#include "SeekSteering.h"
 
 // Sets default values
 AAICharacter::AAICharacter()
@@ -20,6 +21,11 @@ void AAICharacter::BeginPlay()
 	ReadParams("params.xml", m_params);
 
 	ReadPaths("paths.xml", m_paths);
+
+	PathPoints = m_paths.GetPathPoints();
+
+	SeekSteering = NewObject<USeekSteering>(this);
+	SeekSteering->Character = this;
 }
 
 // Called every frame
@@ -28,7 +34,29 @@ void AAICharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	current_angle = GetActorAngle();
 
-	PathFollowing(DeltaTime);
+	PathFollowing(); 
+
+	FSteeringOutput Steering;
+
+	if (SeekSteering)
+	{
+		SeekSteering->TargetPosition = m_params.targetPosition;
+
+		Steering = SeekSteering->GetSteering();
+	}
+
+	velocity += Steering.Linear * DeltaTime;
+
+	if (velocity.Length() > m_params.max_velocity)
+	{
+		velocity =
+			velocity.GetSafeNormal() *
+			m_params.max_velocity;
+	}
+
+	SetActorLocation(
+		GetActorLocation() +
+		velocity);
 
 	DrawDebug();
 }
@@ -67,7 +95,7 @@ void AAICharacter::DrawDebug()
 
 	SetPath(this, TEXT("follow_path"), TEXT("path"), PathPoints, 5.0f, PathMaterial);
 
-	SetCircle(this, TEXT("targetPosition"), m_params.targetPosition, 20.0f);
+	SetCircle(this, TEXT("targetPosition"), m_params.targetPosition, 10.0f);
 	FVector dir(cos(FMath::DegreesToRadians(m_params.targetRotation)), 0.0f, sin(FMath::DegreesToRadians(m_params.targetRotation)));
 	SetArrow(this, TEXT("targetRotation"), dir, 80.0f);
 
@@ -81,13 +109,13 @@ void AAICharacter::DrawDebug()
 		this,
 		TEXT("closest"),
 		ClosestPoint,
-		10.f);
+		40.f);
 
 	SetCircle(
 		this,
 		TEXT("seek"),
 		SeekPoint,
-		15.f);
+		85.f);
 }
 
 FVector AAICharacter::GetClosestPointOnSegment(
@@ -97,9 +125,14 @@ FVector AAICharacter::GetClosestPointOnSegment(
 {
 	FVector AB = B - A;
 
-	float t =
-		FVector::DotProduct(P - A, AB) /
-		FVector::DotProduct(AB, AB);
+	float LengthSq = FVector::DotProduct(AB, AB);
+
+	if (LengthSq <= KINDA_SMALL_NUMBER)
+	{
+		return A;
+	}
+
+	float t = FVector::DotProduct(P - A, AB) / LengthSq;
 
 	t = FMath::Clamp(t, 0.f, 1.f);
 
@@ -171,7 +204,7 @@ FVector AAICharacter::GetLookAheadPoint(
 	return PathPoints.Last();
 }
 
-void AAICharacter::PathFollowing(float DeltaTime)
+void AAICharacter::PathFollowing()
 {
 	FVector Position = GetActorLocation();
 
@@ -184,30 +217,23 @@ void AAICharacter::PathFollowing(float DeltaTime)
 			ClosestPoint,
 			m_params.look_ahead);
 
-	FVector DesiredVelocity =
-		(SeekPoint - Position).GetSafeNormal()
-		* m_params.max_velocity;
+	/*UE_LOG(LogTemp, Warning,
+		TEXT("Segment=%d  Closest=(%.1f, %.1f)  Seek=(%.1f, %.1f)"),
+		Segment,
+		ClosestPoint.X,
+		ClosestPoint.Z,
+		SeekPoint.X,
+		SeekPoint.Z);*/
 
-	FVector Steering =
-		DesiredVelocity - Velocity;
+	UE_LOG(LogTemp, Warning,
+		TEXT("CurrentSegment %d   DistanceAhead %.2f"),
+		Segment,
+		m_params.look_ahead);
 
-	if (Steering.Size() >
-		m_params.max_acceleration)
-	{
-		Steering =
-			Steering.GetSafeNormal()
-			* m_params.max_acceleration;
-	}
+	UE_LOG(LogTemp, Warning,
+		TEXT("SeekPoint %.1f %.1f"),
+		SeekPoint.X,
+		SeekPoint.Z);
 
-	Velocity += Steering * DeltaTime;
-
-	if (Velocity.Size() > m_params.max_velocity)
-	{
-		Velocity =
-			Velocity.GetSafeNormal()
-			* m_params.max_velocity;
-	}
-
-	SetActorLocation(
-		Position + Velocity * DeltaTime);
+	m_params.targetPosition = SeekPoint;
 }
