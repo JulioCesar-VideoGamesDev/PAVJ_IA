@@ -10,7 +10,7 @@
 #include "paths/paths.h"
 #include "AICharacter.generated.h"
 
-class USeekSteering;
+class UPathFollowingSteering;
 
 UCLASS()
 class MPV_PRACTICAS_API AAICharacter : public APawn
@@ -52,7 +52,7 @@ protected:
 
 	Paths m_paths;
 
-	USeekSteering* SeekSteering;
+	UPathFollowingSteering* PathFollowingSteering;
 
 protected:
 
@@ -103,7 +103,14 @@ public:
 		return angularVelocity;
 	}
 
+	TArray<FVector> GetPathPoints() const
+	{
+		return PathPoints;
+	}
+
 	void DrawDebug();
+
+
 
 	FVector GetClosestPointOnSegment(const FVector& P, const FVector& A, const FVector& B);
 	int GetClosestPathPoint(const FVector& Position, FVector& OutPoint);

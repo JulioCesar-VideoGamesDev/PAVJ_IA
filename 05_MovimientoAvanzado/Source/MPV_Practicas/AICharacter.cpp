@@ -3,7 +3,7 @@
 
 #include "AICharacter.h"
 #include "debug/debugdraw.h"
-#include "SeekSteering.h"
+#include "PathFollowingSteering.h"
 
 // Sets default values
 AAICharacter::AAICharacter()
@@ -24,8 +24,9 @@ void AAICharacter::BeginPlay()
 
 	PathPoints = m_paths.GetPathPoints();
 
-	SeekSteering = NewObject<USeekSteering>(this);
-	SeekSteering->Character = this;
+	PathFollowingSteering = NewObject<UPathFollowingSteering>(this);
+	PathFollowingSteering->Character = this;
+	PathFollowingSteering->PathPoints = PathPoints;
 }
 
 // Called every frame
@@ -38,11 +39,9 @@ void AAICharacter::Tick(float DeltaTime)
 
 	FSteeringOutput Steering;
 
-	if (SeekSteering)
+	if (PathFollowingSteering)
 	{
-		SeekSteering->TargetPosition = m_params.targetPosition;
-
-		Steering = SeekSteering->GetSteering();
+		Steering = PathFollowingSteering->GetSteering();
 	}
 
 	velocity += Steering.Linear * DeltaTime;
