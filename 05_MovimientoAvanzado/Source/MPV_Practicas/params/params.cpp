@@ -84,10 +84,6 @@ bool ReadParams(const char* filename, Params& params)
 		ReadFloatNode(MyChildNode, "look_ahead", params.look_ahead);
 
 		ReadFloatNode(MyChildNode, "time_ahead", params.time_ahead);
-
-		// OBSTACLE AVOIDANCE -----------------------------------------
-
-		ReadFloatNode(MyChildNode, "char_radius", params.char_radius);
 	}
 	return true;
 }

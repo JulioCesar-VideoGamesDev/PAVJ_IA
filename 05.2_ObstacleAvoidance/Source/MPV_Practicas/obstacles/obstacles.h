@@ -1,21 +1,21 @@
-#ifndef __PATH_H__
-#define __PATH_H__
+#ifndef __OBSTACLE_H__
+#define __OBSTACLE_H__
 
 #include <CoreMinimal.h>
 
-struct FObstacleAttr
+struct ObstacleAttr
 {
     FVector Position;
     float Radius;
 };
 
-struct Obstacles
+struct FObstacles
 {
-    TArray<FObstacleAttr> ObstaclesArray;
+    TArray<ObstacleAttr> ObstaclesArray;
 
-    TArray<FObstacleAttr> GetObstaclesArray() { return ObstaclesArray; }
+    TArray<ObstacleAttr> GetObstaclesArray() { return ObstaclesArray; }
 };
 
-bool ReadObstacles(const char* filename, Obstacles& obstacles);
+bool ReadObstacles(const char* filename, FObstacles& obstacles);
 
 #endif

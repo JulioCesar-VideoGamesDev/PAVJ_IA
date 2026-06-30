@@ -9,7 +9,7 @@ struct Params
     FVector targetPosition;
     float max_velocity;
     float max_acceleration;
-    float dest_radius;
+    float arrive_radius;
 
     // Angular
     float targetRotation;

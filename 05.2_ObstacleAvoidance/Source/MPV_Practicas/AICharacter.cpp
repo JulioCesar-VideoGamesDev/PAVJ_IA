@@ -2,8 +2,11 @@
 
 
 #include "AICharacter.h"
+
 #include "debug/debugdraw.h"
-#include "PathFollowingSteering.h"
+#include "DrawDebugHelpers.h"
+
+#include "ObstacleAvoidanceSteering.h"
 
 // Sets default values
 AAICharacter::AAICharacter()
@@ -22,11 +25,15 @@ void AAICharacter::BeginPlay()
 
 	ReadPaths("paths.xml", m_paths);
 
-	PathPoints = m_paths.GetPathPoints();
+	//PathPoints = m_paths.GetPathPoints();
 
-	PathFollowingSteering = NewObject<UPathFollowingSteering>(this);
-	PathFollowingSteering->Character = this;
-	PathFollowingSteering->PathPoints = PathPoints;
+	ReadObstacles("obstacles.xml", m_obstacles);
+
+	ObstaclesArray = m_obstacles.GetObstaclesArray();
+
+	ObstacleAvoidanceSteering = NewObject<UObstacleAvoidanceSteering>(this);
+	ObstacleAvoidanceSteering->Character = this;
+	ObstacleAvoidanceSteering->ObstaclesStruct.ObstaclesArray = ObstaclesArray;
 
 	velocity = FVector(100.f, 0.f, 0.f);
 }
@@ -35,15 +42,13 @@ void AAICharacter::BeginPlay()
 void AAICharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	current_angle = GetActorAngle();
-
-	PathFollowing(); 
+	current_angle = GetActorAngle(); 
 
 	FSteeringOutput Steering;
 
-	if (PathFollowingSteering)
+	if (ObstacleAvoidanceSteering)
 	{
-		Steering = PathFollowingSteering->GetSteering();
+		Steering = ObstacleAvoidanceSteering->GetSteering();
 	}
 
 	velocity += Steering.Linear * DeltaTime;
@@ -57,7 +62,7 @@ void AAICharacter::Tick(float DeltaTime)
 
 	SetActorLocation(
 		GetActorLocation() +
-		velocity);
+		velocity * DeltaTime);
 
 	DrawDebug();
 }
@@ -94,7 +99,7 @@ void AAICharacter::DrawDebug()
 		FVector(0.f, 0.f, 100.f)
 	};*/
 
-	SetPath(this, TEXT("follow_path"), TEXT("path"), PathPoints, 5.0f, PathMaterial);
+	//SetPath(this, TEXT("follow_path"), TEXT("path"), PathPoints, 5.0f, PathMaterial);
 
 	SetCircle(this, TEXT("targetPosition"), m_params.targetPosition, 10.0f);
 	FVector dir(cos(FMath::DegreesToRadians(m_params.targetRotation)), 0.0f, sin(FMath::DegreesToRadians(m_params.targetRotation)));
@@ -106,135 +111,18 @@ void AAICharacter::DrawDebug()
 	};
 	SetPolygons(this, TEXT("navmesh"), TEXT("mesh"), Polygons, NavmeshMaterial);
 
-	SetCircle(
-		this,
-		TEXT("closest"),
-		ClosestPoint,
-		40.f);
-
-	SetCircle(
-		this,
-		TEXT("seek"),
-		SeekPoint,
-		85.f);
-}
-
-FVector AAICharacter::GetClosestPointOnSegment(
-	const FVector& P,
-	const FVector& A,
-	const FVector& B)
-{
-	FVector AB = B - A;
-
-	float LengthSq = FVector::DotProduct(AB, AB);
-
-	if (LengthSq <= KINDA_SMALL_NUMBER)
+	for (const ObstacleAttr& Obstacle : ObstaclesArray)
 	{
-		return A;
+		DrawDebugSphere(
+			GetWorld(),                 // Mundo
+			Obstacle.Position,          // Centro
+			Obstacle.Radius,            // Radio
+			16,                         // Número de segmentos
+			FColor::Red,                // Color
+			false,                      // Persistente
+			0.f,                        // Tiempo (-1 = un frame)
+			0,                          // Profundidad
+			2.f                         // Grosor
+		);
 	}
-
-	float t = FVector::DotProduct(P - A, AB) / LengthSq;
-
-	t = FMath::Clamp(t, 0.f, 1.f);
-
-	return A + AB * t;
-}
-
-int AAICharacter::GetClosestPathPoint(
-	const FVector& Position,
-	FVector& OutPoint)
-{
-	float BestDistance = FLT_MAX;
-	int BestSegment = 0;
-
-	for (int i = 0; i < PathPoints.Num() - 1; i++)
-	{
-		FVector Projection =
-			GetClosestPointOnSegment(
-				Position,
-				PathPoints[i],
-				PathPoints[i + 1]);
-
-		float Dist =
-			FVector::DistSquared(Position, Projection);
-
-		if (Dist < BestDistance)
-		{
-			BestDistance = Dist;
-			BestSegment = i;
-			OutPoint = Projection;
-		}
-	}
-
-	return BestSegment;
-}
-
-FVector AAICharacter::GetLookAheadPoint(
-	int Segment,
-	const FVector& StartPoint,
-	float DistanceAhead)
-{
-	FVector CurrentPoint = StartPoint;
-
-	int CurrentSegment = Segment;
-
-	while (CurrentSegment < PathPoints.Num() - 1)
-	{
-		FVector EndPoint =
-			PathPoints[CurrentSegment + 1];
-
-		float SegmentLength =
-			FVector::Dist(CurrentPoint, EndPoint);
-
-		if (DistanceAhead <= SegmentLength)
-		{
-			FVector Dir =
-				(EndPoint - CurrentPoint).GetSafeNormal();
-
-			return CurrentPoint +
-				Dir * DistanceAhead;
-		}
-
-		DistanceAhead -= SegmentLength;
-
-		CurrentPoint = EndPoint;
-
-		CurrentSegment++;
-	}
-
-	return PathPoints.Last();
-}
-
-void AAICharacter::PathFollowing()
-{
-	FVector Position = GetActorLocation();
-
-	int Segment =
-		GetClosestPathPoint(Position, ClosestPoint);
-
-	SeekPoint =
-		GetLookAheadPoint(
-			Segment,
-			ClosestPoint,
-			m_params.look_ahead);
-
-	/*UE_LOG(LogTemp, Warning,
-		TEXT("Segment=%d  Closest=(%.1f, %.1f)  Seek=(%.1f, %.1f)"),
-		Segment,
-		ClosestPoint.X,
-		ClosestPoint.Z,
-		SeekPoint.X,
-		SeekPoint.Z);*/
-
-	UE_LOG(LogTemp, Warning,
-		TEXT("CurrentSegment %d   DistanceAhead %.2f"),
-		Segment,
-		m_params.look_ahead);
-
-	UE_LOG(LogTemp, Warning,
-		TEXT("SeekPoint %.1f %.1f"),
-		SeekPoint.X,
-		SeekPoint.Z);
-
-	m_params.targetPosition = SeekPoint;
 }

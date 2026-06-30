@@ -8,9 +8,10 @@
 #include "util.h"
 #include "params/params.h"
 #include "paths/paths.h"
+#include "obstacles/obstacles.h"
 #include "AICharacter.generated.h"
 
-class UPathFollowingSteering;
+class UObstacleAvoidanceSteering;
 
 UCLASS()
 class MPV_PRACTICAS_API AAICharacter : public APawn
@@ -52,17 +53,19 @@ protected:
 
 	Paths m_paths;
 
-	UPathFollowingSteering* PathFollowingSteering;
+	FObstacles m_obstacles;
+
+	UObstacleAvoidanceSteering* ObstacleAvoidanceSteering;
 
 protected:
+
+	TArray<ObstacleAttr> ObstaclesArray;
 
 	TArray<FVector> PathPoints;
 
 	FVector ClosestPoint;
 	FVector SeekPoint;
 	FVector PredictedPoint;
-
-	FVector Velocity = FVector::ZeroVector;
 
 public:	
 	// Called every frame
@@ -109,12 +112,4 @@ public:
 	}
 
 	void DrawDebug();
-
-
-
-	FVector GetClosestPointOnSegment(const FVector& P, const FVector& A, const FVector& B);
-	int GetClosestPathPoint(const FVector& Position, FVector& OutPoint);
-	FVector GetLookAheadPoint(int Segment, const FVector& StartPoint, float DistanceAhead);
-
-	void PathFollowing();
 };

@@ -2,7 +2,7 @@
 	<params>
 		<max_velocity value="20"> </max_velocity>
 		<max_acceleration value="180"> </max_acceleration>
-		<dest_radius value="60"> </dest_radius>
+		<arrive_radius value="60"> </arrive_radius>
 		<targetPosition x="400" z="300"> </targetPosition>
 		
 		<max_angular_velocity value="10"> </max_angular_velocity>

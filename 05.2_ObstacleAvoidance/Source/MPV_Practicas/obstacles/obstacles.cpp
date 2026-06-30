@@ -6,7 +6,7 @@
 #include "Misc/Paths.h"
 
 
-bool ReadObstacles(const char* filename, Obstacles& obstacles)
+bool ReadObstacles(const char* filename, FObstacles& obstacles)
 {
 	obstacles.ObstaclesArray.Empty();
 
@@ -58,7 +58,7 @@ bool ReadObstacles(const char* filename, Obstacles& obstacles)
 				FDefaultValueHelper::ParseFloat(value, r);
 
 				obstacles.ObstaclesArray.Add(
-					FObstacleAttr(FVector(x, 0.f, y), r)					
+					ObstacleAttr(FVector(x, 0.f, y), r)					
 				);
 			}
 		}

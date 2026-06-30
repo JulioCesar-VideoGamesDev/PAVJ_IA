@@ -62,8 +62,6 @@ protected:
 	FVector SeekPoint;
 	FVector PredictedPoint;
 
-	FVector Velocity = FVector::ZeroVector;
-
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -109,12 +107,4 @@ public:
 	}
 
 	void DrawDebug();
-
-
-
-	FVector GetClosestPointOnSegment(const FVector& P, const FVector& A, const FVector& B);
-	int GetClosestPathPoint(const FVector& Position, FVector& OutPoint);
-	FVector GetLookAheadPoint(int Segment, const FVector& StartPoint, float DistanceAhead);
-
-	void PathFollowing();
 };
