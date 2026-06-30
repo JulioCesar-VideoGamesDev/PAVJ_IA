@@ -1,0 +1,6 @@
+<root>
+	<obstacles>
+		<obstacle x="-100" y="-100" r="30"></obstacle>
+		<obstacle x="100" y="-200" r="12"></obstacle>
+	</obstacles>
+</root>

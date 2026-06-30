@@ -34,13 +34,13 @@ bool ReadParams(const char* filename, Params& params)
 	FString FilePath = FPaths::Combine(*ContentFolderDir, *params_path);
 	UE_LOG(LogTemp, Log, TEXT("Params Path: %s"), *FilePath);
 
-
+	
 	FXmlFile MyXml(FilePath, EConstructMethod::ConstructFromFile);
-
+	
 	if (MyXml.GetRootNode())
 	{
 		const FXmlNode* RootNode = MyXml.GetRootNode();
-
+	
 		const FString MyChildTag("params");
 		const FXmlNode* MyChildNode = RootNode->FindChildNode(MyChildTag);
 
