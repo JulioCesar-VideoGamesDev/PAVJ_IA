@@ -1,0 +1,15 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "SeekSteering.h"
+#include "ArriveSteering.generated.h"
+
+UCLASS()
+class MPV_PRACTICAS_API UArriveSteering : public USeekSteering
+{
+	GENERATED_BODY()
+	
+public:
+
+	virtual FSteeringOutput GetSteering() override;
+};
