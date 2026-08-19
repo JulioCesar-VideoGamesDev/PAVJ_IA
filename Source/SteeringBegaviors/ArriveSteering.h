@@ -11,5 +11,5 @@ class MPV_PRACTICAS_API UArriveSteering : public USeekSteering
 	
 public:
 
-	virtual FSteeringOutput GetSteering() override;
+	virtual void GetSteering(FSteeringOutput& SteeringOutput) override;
 };

@@ -99,11 +99,11 @@ bool ReadParams(const char* filename, Params& params)
 
 		// ANGULAR ----------------------------------
 
-		ReadFloatNode(MyChildNode, "max_angular_velocity", params.max_angular_velocity);
+		ReadFloatNode(MyChildNode, "max_angular_speed", params.max_angular_speed);
 
 		ReadFloatNode(MyChildNode, "max_angular_acceleration", params.max_angular_acceleration);
 
-		ReadFloatNode(MyChildNode, "angular_arrive_radius", params.angular_arrive_radius);
+		ReadFloatNode(MyChildNode, "angular_arrive_angle", params.angular_arrive_angle);
 
 		ReadFloatNode(MyChildNode, "targetRotation", params.targetRotation);
 

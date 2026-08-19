@@ -3,27 +3,30 @@
 
 #include "debug/debugdraw.h"
 
-FSteeringOutput UObstacleAvoidanceSteering::GetSteering()
+void UObstacleAvoidanceSteering::GetSteering(FSteeringOutput& SteeringOutput)
 {
     FSteeringOutput Result;
 
-    if (!Character)
+    if (!::IsValid(AICharacter))
     {
-        return Result;
+        UE_LOG(LogTemp, Error, TEXT("AICHARACTER ISN'T VALID"));
+
+        SteeringOutput = Result;
+        return;
     }
 
-    FVector Position = Character->GetActorLocation();
-    FVector Velocity = Character->GetCurrentVelocity();
+    FVector Position = AICharacter->GetActorLocation();
+    FVector Velocity = AICharacter->GetAICharacterCurrentVelocity();
 
     if (Velocity.IsNearlyZero())
     {
-        return Result;
+        SteeringOutput = Result;
     }
 
     FVector Direction = Velocity.GetSafeNormal();
 
     const float LookAhead = 100.f;
-    const float CharacterRadius = Character->GetParams().char_radius;
+    const float CharacterRadius = AICharacter->GetParams().char_radius;
 
     float BestProjection = TNumericLimits<float>::Max();
     bool bCollision = false;
@@ -69,14 +72,14 @@ FSteeringOutput UObstacleAvoidanceSteering::GetSteering()
     {
         Result.Linear = FVector::ZeroVector;
         Result.Angular = 0.f;
-        return Result;
+        SteeringOutput = Result;
     }
 
     Result.Linear =
         AvoidDirection *
-        Character->GetParams().max_acceleration;
+        AICharacter->GetParams().max_acceleration;
 
     Result.Angular = 0.f;
 
-    return Result;
+    SteeringOutput = Result;
 }

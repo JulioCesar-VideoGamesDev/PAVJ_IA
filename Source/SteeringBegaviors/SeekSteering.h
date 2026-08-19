@@ -15,15 +15,18 @@ public:
 
     // Pointer the the AICharacter used to GetSteering.
     UPROPERTY()
-    TObjectPtr<AAICharacter> Character;
+    TObjectPtr<AAICharacter> AICharacter;
 
-    virtual FSteeringOutput GetSteering() override;
+    UFUNCTION(BlueprintCallable, Category = "Streering")
+    virtual void GetSteering(FSteeringOutput& SteeringOutput) override;
 
 
     FVector TargetPosition{ FVector::ZeroVector };
 
     FVector MaxVelocityPosible = FVector::ZeroVector;
     FVector LastAcceleration = FVector::ZeroVector;
+
+    bool DoDrawDebug{ false };
 
     UFUNCTION()
     void DrawDebug(FSteeringOutput Steering);

@@ -1,62 +1,70 @@
 #include "AlignSteering.h"
 #include "Characters/AICharacter.h"
 
-FSteeringOutput UAlignSteering::GetSteering()
+void UAlignSteering::GetSteering(FSteeringOutput& SteeringOutput)
 {
     FSteeringOutput Result;
 
-    if (!Character)
+    if (!::IsValid(AICharacter))
     {
-        UE_LOG(LogTemp, Error, TEXT("CHARACTER ISN'T VALID"));
+        UE_LOG(LogTemp, Error, TEXT("AICHARACTER ISN'T VALID"));
 
-        return Result;
+        SteeringOutput = Result;
+        return;
     }
 
-    TargetRotation = Character->GetTargetRotation();
+    const float CurrentAngle = AICharacter->GetActorAngle();
 
-    const float CurrentAngle = Character->GetActorAngle();
-
-    // Diferencia angular mínima [-180,180]
-    float DesiredRotation =
+    // Angular difference. This also alows us to know if we have to rotate left or right.
+    float AngularDifference =
         FMath::FindDeltaAngleDegrees(
             CurrentAngle,
             TargetRotation);
 
-    // Ya estamos orientados
-    if (FMath::Abs(DesiredRotation) < KINDA_SMALL_NUMBER)
+    // Already Aligned.
+    if (FMath::Abs(AngularDifference) < KINDA_SMALL_NUMBER)
     {
         Result.Linear = FVector::ZeroVector;
         Result.Angular = 0.f;
-        return Result;
+        SteeringOutput = Result;
+
+        return;
     }
 
-    float TargetAngularVelocity =
-        (DesiredRotation < 0.f ? -1.f : 1.f) *
-        Character->GetParams().max_angular_velocity;
-
-    // Frenado al acercarse al objetivo
-    if (FMath::Abs(DesiredRotation) <
-        Character->GetParams().angular_arrive_radius)
+    if (FMath::Abs(AngularDifference) > AICharacter->GetParams().angular_arrive_angle)
     {
-        const float Ratio =
-            FMath::Abs(DesiredRotation) /
-            Character->GetParams().angular_arrive_radius;
+        // Max AngularVelocity posible.
+        float MaxAngularVelocity =
+            (AngularDifference < 0.f ? -1.f : 1.f) *
+            AICharacter->GetParams().max_angular_speed;
 
-        TargetAngularVelocity *= Ratio;
+        Result.Angular = MaxAngularVelocity - AICharacter->GetAICharacterCurrentAngularVelocity(); // Calculat the acceleration for this iteration.
+
+        if (FMath::Abs(Result.Angular) > AICharacter->GetParams().max_angular_acceleration)
+        {
+            if (Result.Angular >= 0) Result.Angular = AICharacter->GetParams().max_angular_acceleration;
+            else Result.Angular = AICharacter->GetParams().max_angular_acceleration * -1;
+            SteeringOutput = Result;
+        }
     }
+    else // Arriving
+    {
+        float MaxAngularSpeed = AICharacter->GetParams().max_angular_speed;
+        float DesiredAngularSpeed = 0.f;
 
-    // Aceleración angular necesaria
-    Result.Angular =
-        TargetAngularVelocity -
-        Character->GetCurrentAngularVelocity();
+        DesiredAngularSpeed = MaxAngularSpeed * (AngularDifference / AICharacter->GetParams().angular_arrive_angle);
+        //DesiredAngularSpeed = AICharacter->GetAICharacterCurrentAngularVelocity() * AngularDifference / AICharacter->GetParams().angular_arrive_angle;
 
-    // Limitar aceleración angular
-    Result.Angular = FMath::Clamp(
-        Result.Angular,
-        -Character->GetParams().max_angular_acceleration,
-        Character->GetParams().max_angular_acceleration);
+        DesiredAngularSpeed = FMath::Min(DesiredAngularSpeed, MaxAngularSpeed);
+
+        Result.Angular = DesiredAngularSpeed - AICharacter->GetAICharacterCurrentAngularVelocity();
+
+        // If we have a max_deceleration then we would clamp it here.
+    }
 
     Result.Linear = FVector::ZeroVector;
 
-    return Result;
+    SteeringOutput = Result;
+
+    return;
 }

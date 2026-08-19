@@ -140,12 +140,12 @@ public:
 		return m_params.targetRotation;
 	}
 
-	FVector GetCurrentVelocity() const
+	FVector GetAICharacterCurrentVelocity() const
 	{
 		return velocity;
 	}
 
-	float GetCurrentAngularVelocity() const
+	float GetAICharacterCurrentAngularVelocity() const
 	{
 		return angularVelocity;
 	}
