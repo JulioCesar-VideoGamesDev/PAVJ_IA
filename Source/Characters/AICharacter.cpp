@@ -54,11 +54,19 @@ void AAICharacter::BeginPlay()
 	//----------------------------------------------------
 
 	// INITIALIZE STEERINGS
-	SeekSteering = NewObject<USeekSteering>(this);
+
+	ArriveSteering = NewObject<UArriveSteering>(this);
 	
-	if (SeekSteering)
+	if (ArriveSteering)
 	{
-		SeekSteering->Character = this;
+		ArriveSteering->AICharacter = this;
+	}
+
+	AlignToMovementSteering = NewObject<UAlignToMovementSteering>(this);
+
+	if (AlignToMovementSteering)
+	{
+		AlignToMovementSteering->AICharacter = this;
 	}
 }
 
@@ -71,12 +79,14 @@ void AAICharacter::Tick(float DeltaTime)
 	// GET THE STEERING
 	FSteeringOutput Steering;
 
-	if (SeekSteering)
+	if (ArriveSteering)
 	{
-		Steering = SeekSteering->GetSteering();
+		ArriveSteering->TargetPosition = m_params.targetPosition;
+		ArriveSteering->DoDrawDebug = true;
+		ArriveSteering->GetSteering(Steering);
 	}
 
-	velocity += Steering.Linear * DeltaTime;
+	velocity += Steering.Linear;
 
 	if (velocity.Length() > m_params.max_speed) // Clamp the velocity with m_params.max_velocity
 	{
@@ -88,8 +98,26 @@ void AAICharacter::Tick(float DeltaTime)
 	// Set the new Location based on our Velocity.
 	SetActorLocation(
 		GetActorLocation() +
-		velocity);
-	
+		velocity * DeltaTime);
+
+	if (AlignToMovementSteering)
+	{
+		AlignToMovementSteering->GetSteering(Steering);
+	}
+
+	angularVelocity += Steering.Angular;
+
+	if (FMath::Abs(angularVelocity) > m_params.max_angular_speed)
+	{
+		if (angularVelocity >= 0) angularVelocity = m_params.max_angular_speed;
+		else angularVelocity = m_params.max_angular_speed * -1;
+	}
+
+	// Set the new Rotation based on our AngularVelocity.
+	SetActorAngle(
+		GetActorAngle() +
+		angularVelocity * DeltaTime);
+
 	// Draw some Debugs to visualize better whats happening.
 	DrawDebug();
 }
@@ -110,8 +138,8 @@ void AAICharacter::OnClickedRight(const FVector& mousePosition)
 	m_params.targetPosition = mousePosition;
 
 	FVector dir = (mousePosition - GetActorLocation()).GetSafeNormal();
-	float angle = FMath::RadiansToDegrees(atan2(dir.Z, dir.X));
-	m_params.targetRotation = angle;
+	/*float angle = FMath::RadiansToDegrees(atan2(dir.Z, dir.X));
+	m_params.targetRotation = angle;*/
 }
 
 void AAICharacter::DrawDebug()

@@ -3,51 +3,50 @@
 
 #include "DrawDebugHelpers.h"
 
-FSteeringOutput USeekSteering::GetSteering()
+void USeekSteering::GetSteering(FSteeringOutput& SteeringOutput)
 {
     FSteeringOutput Result;
 
-    if (!Character)
+    if (!::IsValid(AICharacter))
     {
-        UE_LOG(LogTemp, Error, TEXT("CHARACTER ISN'T VALID"));
+        UE_LOG(LogTemp, Error, TEXT("AICHARACTER ISN'T VALID"));
 
-        return Result;
+        SteeringOutput = Result;
+        return;
     }
 
-    TargetPosition = Character->GetTargetPosition();
-
-    FVector Direction = Character->GetTargetPosition() - Character->GetActorLocation();
+    FVector Direction = TargetPosition - AICharacter->GetActorLocation();
 
     if (!Direction.IsNearlyZero())
     {
         Direction.Normalize();
     }
 
-    MaxVelocityPosible = Direction * Character->GetParams().max_speed; // Max Velocity posible
+    MaxVelocityPosible = Direction * AICharacter->GetParams().max_speed; // Max Velocity posible
 
     // Subtract CurrentVelocity to MaxVelocityPosible to get the LinearVelocity of the Steering.
-    Result.Linear = MaxVelocityPosible - Character->GetCurrentVelocity();
-    
-    if (Result.Linear.Size() > Character->GetParams().max_acceleration)
+    Result.Linear = MaxVelocityPosible - AICharacter->GetAICharacterCurrentVelocity();
+
+    if (Result.Linear.Size() > AICharacter->GetParams().max_acceleration)
     {
         Result.Linear =
             Result.Linear.GetSafeNormal() *
-            Character->GetParams().max_acceleration;
+            AICharacter->GetParams().max_acceleration;
     }
 
     LastAcceleration = Result.Linear;
 
     Result.Angular = 0.0f;
 
-    DrawDebug(Result);
+    if (DoDrawDebug) DrawDebug(Result);
 
-    return Result;
+    SteeringOutput = Result;
 }
 
 void USeekSteering::DrawDebug(FSteeringOutput Steering)
 {
-    FVector Start = Character->GetActorLocation();
-    FVector End = Start + Character->GetVelocity() + Steering.Linear * 4;
+    FVector Start = AICharacter->GetActorLocation();
+    FVector End = Start + AICharacter->GetAICharacterCurrentVelocity() + Steering.Linear;
 
     DrawDebugLine(
         GetWorld(),

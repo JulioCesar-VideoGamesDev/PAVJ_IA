@@ -4,35 +4,36 @@
 
 #include "debug/debugdraw.h"
 
-FSteeringOutput UPathFollowingSteering::GetSteering()
+void UPathFollowingSteering::GetSteering(FSteeringOutput& SteeringOutput)
 {
     FSteeringOutput Result;
 
-    if (!Character)
+    if (!::IsValid(AICharacter))
     {
-        UE_LOG(LogTemp, Error, TEXT("CHARACTER ISN'T VALID"));
+        UE_LOG(LogTemp, Error, TEXT("AICHARACTER ISN'T VALID"));
 
-        return Result;
+        SteeringOutput = Result;
+        return;
     }
 
-    if (!SeekDelegate)
+    if (!::IsValid(SeekDelegate))
     {
         SeekDelegate = NewObject<USeekSteering>(this);
-        SeekDelegate->Character = Character;
+        SeekDelegate->AICharacter = AICharacter;
     }
 
     // Shearch for the closest point in the path.
 
-    FClosestPointResult ClosestPoint = GetClosestPoint(Character->GetActorLocation());
+    FClosestPointResult ClosestPoint = GetClosestPoint(AICharacter->GetActorLocation());
 
     // Advance some distance.
 
-    SeekDelegate->TargetPosition = AdvanceAlongPath(ClosestPoint, Character->GetParams().look_ahead);
+    SeekDelegate->TargetPosition = AdvanceAlongPath(ClosestPoint, AICharacter->GetParams().look_ahead);
 
     // Then we do seek.
-    Result = SeekDelegate->GetSteering();
+    SeekDelegate->GetSteering(Result);
 
-    return Result;
+    SteeringOutput = Result;
 }
 
 FVector UPathFollowingSteering::ClosestPointOnSegment(

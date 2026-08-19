@@ -3,15 +3,15 @@
 		<initial_speed value="10"> </initial_speed>
 		<initial_direction x="10" y="0" z="10"> </initial_direction>
 		
-		<max_speed value="20"> </max_speed>
+		<max_speed value="200"> </max_speed>
 		<max_acceleration value="180"> </max_acceleration>
 		<arrive_radius value="60"> </arrive_radius>
 		<targetPosition x="400" y="0" z="300"> </targetPosition>
 		
-		<max_angular_velocity value="10"> </max_angular_velocity>
-		<max_angular_acceleration value="250"> </max_angular_acceleration>
-		<angular_arrive_radius value="20"> </angular_arrive_radius>
-		<targetRotation value="90"> </targetRotation>
+		<max_angular_speed value="90"> </max_angular_speed>
+		<max_angular_acceleration value="15"> </max_angular_acceleration>
+		<angular_arrive_angle value="5"> </angular_arrive_angle>
+		<targetRotation value="180"> </targetRotation>
 		
 		<look_ahead value="40"> </look_ahead>
 		<time_ahead value="4"> </time_ahead>

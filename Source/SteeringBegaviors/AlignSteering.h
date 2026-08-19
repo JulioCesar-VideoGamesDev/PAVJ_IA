@@ -15,9 +15,10 @@ public:
 
     // Pointer the the AICharacter used to GetSteering.
     UPROPERTY()
-    TObjectPtr<AAICharacter> Character;
+    TObjectPtr<AAICharacter> AICharacter;
 
     float TargetRotation{ 0.f };
 
-    virtual FSteeringOutput GetSteering() override;
+    UFUNCTION(BlueprintCallable, Category = "Streering")
+    virtual void GetSteering(FSteeringOutput& SteeringOutput) override;
 };

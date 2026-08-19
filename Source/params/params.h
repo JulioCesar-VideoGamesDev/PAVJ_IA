@@ -16,9 +16,9 @@ struct Params
     FVector targetPosition{ FVector::ZeroVector };
 
     // Angular
-    float max_angular_velocity{ 0.f };
+    float max_angular_speed{ 0.f };
     float max_angular_acceleration{ 0.f };
-    float angular_arrive_radius{ 0.f };
+    float angular_arrive_angle{ 0.f };
     float targetRotation{ 0.f };
 
     // Path

@@ -19,6 +19,5 @@ class MPV_PRACTICAS_API ISteering
 public:
 
     // Calculates the linear acceleration and the angular acceleration.
-    UFUNCTION()
-    virtual FSteeringOutput GetSteering() = 0;
+    virtual void GetSteering(FSteeringOutput& SteeringOutput) = 0;
 };

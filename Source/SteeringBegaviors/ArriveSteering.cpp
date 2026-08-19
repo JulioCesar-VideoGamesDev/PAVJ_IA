@@ -2,20 +2,19 @@
 
 #include "Characters/AICharacter.h"
 
-FSteeringOutput UArriveSteering::GetSteering()
+void UArriveSteering::GetSteering(FSteeringOutput& SteeringOutput)
 {
     FSteeringOutput Result;
 
-    if (!Character)
+    if (!::IsValid(AICharacter))
     {
-        UE_LOG(LogTemp, Error, TEXT("CHARACTER ISN'T VALID"));
+        UE_LOG(LogTemp, Error, TEXT("AICHARACTER ISN'T VALID"));
 
-        return Result;
+        SteeringOutput = Result;
+        return;
     }
 
-    TargetPosition = Character->GetTargetPosition();
-
-    FVector Direction = TargetPosition - Character->GetActorLocation();
+    FVector Direction = TargetPosition - AICharacter->GetActorLocation();
 
     float Distance = Direction.Size();
 
@@ -24,26 +23,35 @@ FSteeringOutput UArriveSteering::GetSteering()
         Direction.Normalize();
     }
 
-    if (Distance > Character->GetParams().arrive_radius) // Not arriving yet.
+    if (Distance > AICharacter->GetParams().arrive_radius) // Not arriving yet.
     {
-        MaxVelocityPosible = Direction * Character->GetParams().max_speed;
+        Super::GetSteering(Result); // Seek
+
+        SteeringOutput = Result;
+
+        return;
     }
-    else
+    else // Arriving
     {
-        float targetSpeed = (Character->GetParams().max_speed * Distance) / Character->GetParams().arrive_radius;
-        MaxVelocityPosible = Direction * targetSpeed;
-        UE_LOG(LogTemp, Warning, TEXT("ARRIVING"));
+        float MaxSpeed = AICharacter->GetParams().max_speed;
+        float DesiredSpeed = 0.f;
+
+        DesiredSpeed = MaxSpeed * (Distance / AICharacter->GetParams().arrive_radius);
+        //DesiredSpeed = AICharacter->GetAIAICharacterCurrentVelocity().Size() * Distance / AICharacter->GetParams().arrive_radius;
+
+        DesiredSpeed = FMath::Min(DesiredSpeed, MaxSpeed);
+        FVector DesiredVelocity = Direction * DesiredSpeed;
+
+        Result.Linear = DesiredVelocity - AICharacter->GetAICharacterCurrentVelocity();
+
+        // If we have a max_deceleration then we would clamp it here.
+
+        Result.Angular = 0.0f;
+
+        if (DoDrawDebug) DrawDebug(Result);
+
+        SteeringOutput = Result;
+
+        return;
     }
-
-    Result.Linear = MaxVelocityPosible - Character->GetCurrentVelocity();
-
-    // Now that I have my desired velocity, I normalize it and multiply it by my acceleration.
-    Result.Linear.Normalize();
-    Result.Linear *= Character->GetParams().max_acceleration;
-
-    LastAcceleration = Result.Linear;
-
-    Result.Angular = 0.0f;
-
-    return Result;
 }

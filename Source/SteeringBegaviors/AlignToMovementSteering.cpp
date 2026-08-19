@@ -3,38 +3,50 @@
 
 #include "AlignSteering.h"
 
-FSteeringOutput UAlignToMovementSteering::GetSteering()
+void UAlignToMovementSteering::GetSteering(FSteeringOutput& SteeringOutput)
 {
     FSteeringOutput Result;
 
-    if (!Character)
+    if (!::IsValid(AICharacter))
     {
-        UE_LOG(LogTemp, Error, TEXT("CHARACTER ISN'T VALID"));
+        UE_LOG(LogTemp, Error, TEXT("AICHARACTER ISN'T VALID"));
 
-        return Result;
+        SteeringOutput = Result;
+        return;
     }
 
-    if (!AlignDelegate)
+    if (!::IsValid(AlignDelegate))
     {
         AlignDelegate = NewObject<UAlignSteering>(this);
-        AlignDelegate->Character = Character;
+        AlignDelegate->AICharacter = AICharacter;
     }
 
-    const FVector Velocity = Character->GetCurrentVelocity();
-
-    if (Velocity.SizeSquared() < KINDA_SMALL_NUMBER)
+    const FVector Velocity = AICharacter->GetAICharacterCurrentVelocity();
+    
+    // We don't have a movement direction.
+    if (Velocity.IsNearlyZero())
     {
-        return FSteeringOutput();
+        Result.Linear = FVector::ZeroVector;
+        Result.Angular = 0.f;
+
+        SteeringOutput = Result;
+        return;
     }
 
-    const float TargetAngle =
+    // The direction we are moving towards is our target rotation.
+    // This will cause that the AI aligns backwards if the velocity is oposite to the direction that its facing.
+    // const float TargetPitch = Velocity.Rotation().Pitch;
+    
+    // To ensure that we rotate to face the direction that we are moving.
+    const float TargetPitch =
         FMath::RadiansToDegrees(
-            FMath::Atan2(Velocity.Y, Velocity.X)
+            FMath::Atan2(Velocity.Z, Velocity.X)
         );
+    
+    AlignDelegate->TargetRotation = TargetPitch;
 
-    AlignDelegate->Character = Character;
-    AlignDelegate->TargetRotation = TargetAngle;
+    // Let AlignSteering calculate the angular acceleration.
+    AlignDelegate->GetSteering(Result);
 
-    Result = AlignDelegate->GetSteering();
-    return Result;
+    SteeringOutput = Result;
 }
