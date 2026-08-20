@@ -5,7 +5,7 @@
 #include "PathFollowingSteering.generated.h"
 
 class AAICharacter;
-class USeekSteering;
+class UArriveSteering;
 
 struct FClosestPointResult
 {
@@ -27,9 +27,14 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Streering")
     virtual void GetSteering(FSteeringOutput& SteeringOutput) override;
 
+    UPROPERTY()
+    bool IsLooped{ false };
 
-
+    UPROPERTY()
     TArray<FVector> PathPoints;
+
+    UPROPERTY()
+    int32 CurrentSegment{ 0 }; // Each segment is the union of the previust PathPoint and the next PathPoint.
 
     FVector ClosestPointOnSegment(const FVector& Point, const FVector& A, const FVector& B);
 
@@ -42,5 +47,5 @@ public:
 
 private:
     UPROPERTY()
-    TObjectPtr<USeekSteering> SeekDelegate;
+    TObjectPtr<UArriveSteering> ArriveDelegate;
 };

@@ -3,9 +3,9 @@
 		<initial_speed value="10"> </initial_speed>
 		<initial_direction x="10" y="0" z="10"> </initial_direction>
 		
-		<max_speed value="200"> </max_speed>
+		<max_speed value="100"> </max_speed>
 		<max_acceleration value="180"> </max_acceleration>
-		<arrive_radius value="60"> </arrive_radius>
+		<arrive_radius value="5"> </arrive_radius>
 		<targetPosition x="400" y="0" z="300"> </targetPosition>
 		
 		<max_angular_speed value="90"> </max_angular_speed>

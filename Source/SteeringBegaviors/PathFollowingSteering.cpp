@@ -1,6 +1,6 @@
 #include "PathFollowingSteering.h"
 #include "Characters/AICharacter.h"
-#include "SeekSteering.h"
+#include "ArriveSteering.h"
 
 #include "debug/debugdraw.h"
 
@@ -16,10 +16,16 @@ void UPathFollowingSteering::GetSteering(FSteeringOutput& SteeringOutput)
         return;
     }
 
-    if (!::IsValid(SeekDelegate))
+    if (PathPoints.Num() < 2)
     {
-        SeekDelegate = NewObject<USeekSteering>(this);
-        SeekDelegate->AICharacter = AICharacter;
+        SteeringOutput = Result;
+        return;
+    }
+
+    if (!::IsValid(ArriveDelegate))
+    {
+        ArriveDelegate = NewObject<UArriveSteering>(this);
+        ArriveDelegate->AICharacter = AICharacter;
     }
 
     // Shearch for the closest point in the path.
@@ -28,10 +34,10 @@ void UPathFollowingSteering::GetSteering(FSteeringOutput& SteeringOutput)
 
     // Advance some distance.
 
-    SeekDelegate->TargetPosition = AdvanceAlongPath(ClosestPoint, AICharacter->GetParams().look_ahead);
+    ArriveDelegate->TargetPosition = AdvanceAlongPath(ClosestPoint, AICharacter->GetParams().look_ahead);
 
     // Then we do seek.
-    SeekDelegate->GetSteering(Result);
+    ArriveDelegate->GetSteering(Result);
 
     SteeringOutput = Result;
 }
@@ -61,27 +67,49 @@ FClosestPointResult UPathFollowingSteering::GetClosestPoint(const FVector& Posit
     FClosestPointResult Result = FClosestPointResult();
 
     FVector BestPoint = FVector::ZeroVector;
-    float BestDistance = TNumericLimits<float>::Max();
+    float BestDistanceSq = TNumericLimits<float>::Max();
 
-    for (int32 i = 0; i < PathPoints.Num() - 1; ++i)
+    int32 NextSegment = CurrentSegment + 1;
+
+    if (IsLooped)
     {
-        FVector Candidate =
-            ClosestPointOnSegment(
-                Position,
-                PathPoints[i],
-                PathPoints[i + 1]);
-
-        float DistSq =
-            FVector::DistSquared(Position, Candidate);
-
-        if (DistSq < BestDistance)
-        {
-            BestDistance = DistSq;
-            BestPoint = Candidate;
-
-            Result.SegmentIndex = i;
-        }
+        NextSegment %= PathPoints.Num();
     }
+    else
+    {
+        NextSegment = FMath::Min(
+            NextSegment,
+            PathPoints.Num() - 2);
+    }
+
+    auto CheckSegment = [&](int32 Segment)
+        {
+            int32 NextPoint = Segment + 1;
+
+            if (IsLooped)
+            {
+                NextPoint %= PathPoints.Num();
+            }
+
+            FVector Candidate =
+                ClosestPointOnSegment(
+                    Position,
+                    PathPoints[Segment],
+                    PathPoints[NextPoint]);
+
+            float DistSq =
+                FVector::DistSquared(Position, Candidate);
+
+            if (DistSq < BestDistanceSq)
+            {
+                BestDistanceSq = DistSq;
+                BestPoint = Candidate;
+                Result.SegmentIndex = Segment;
+            }
+        };
+
+    CheckSegment(CurrentSegment);
+    CheckSegment(NextSegment);
 
     Result.Point = BestPoint;
 
@@ -92,31 +120,53 @@ FVector UPathFollowingSteering::AdvanceAlongPath(
     const FClosestPointResult& Closest,
     float Distance)
 {
-    FVector Current = Closest.Point;
-
+    FVector CurrentPoint = Closest.Point;
     int32 Segment = Closest.SegmentIndex;
 
-    while (Segment < PathPoints.Num() - 1)
+    while (true) // Travvel all segments.
     {
-        FVector End = PathPoints[Segment + 1];
+        int32 NextPointIndex = Segment + 1;
 
-        float Remaining =
-            FVector::Distance(Current, End);
-
-        if (Distance <= Remaining)
+        if (IsLooped)
         {
-            FVector Direction =
-                (End - Current).GetSafeNormal();
-
-            return Current + Direction * Distance;
+            NextPointIndex %= PathPoints.Num();
+        }
+        else if (NextPointIndex >= PathPoints.Num())
+        {
+            return PathPoints.Last();
         }
 
+        const FVector EndOfSegment = PathPoints[NextPointIndex];
+
+        const float Remaining = FVector::Distance(CurrentPoint, EndOfSegment);
+
+        // The distance remaining fits in this segment.
+        if (Distance <= Remaining)
+        {
+            CurrentSegment = Segment;
+
+            const FVector Direction =
+                (EndOfSegment - CurrentPoint).GetSafeNormal();
+
+            return CurrentPoint + Direction * Distance;
+        }
+
+        // Consume the remaining distance of this segment.
         Distance -= Remaining;
 
+        // Move to the next segment.
         Segment++;
 
-        Current = PathPoints[Segment];
+        if (IsLooped)
+        {
+            Segment %= PathPoints.Num();
+        }
+        else if (Segment >= PathPoints.Num() - 1) // We reached the end of the path.
+        {
+            return PathPoints.Last();
+        }
+        
+        CurrentSegment = Segment;
+        CurrentPoint = PathPoints[Segment];
     }
-
-    return PathPoints.Last();
 }

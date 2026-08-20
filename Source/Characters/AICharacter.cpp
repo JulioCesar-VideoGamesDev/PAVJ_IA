@@ -55,11 +55,13 @@ void AAICharacter::BeginPlay()
 
 	// INITIALIZE STEERINGS
 
-	ArriveSteering = NewObject<UArriveSteering>(this);
+	PathFollowingSteering = NewObject<UPathFollowingSteering>(this);
 	
-	if (ArriveSteering)
+	if (PathFollowingSteering)
 	{
-		ArriveSteering->AICharacter = this;
+		PathFollowingSteering->AICharacter = this;
+		PathFollowingSteering->PathPoints = m_paths.PathPoints;
+		PathFollowingSteering->IsLooped = true;
 	}
 
 	AlignToMovementSteering = NewObject<UAlignToMovementSteering>(this);
@@ -79,11 +81,9 @@ void AAICharacter::Tick(float DeltaTime)
 	// GET THE STEERING
 	FSteeringOutput Steering;
 
-	if (ArriveSteering)
+	if (PathFollowingSteering)
 	{
-		ArriveSteering->TargetPosition = m_params.targetPosition;
-		ArriveSteering->DoDrawDebug = true;
-		ArriveSteering->GetSteering(Steering);
+		PathFollowingSteering->GetSteering(Steering);
 	}
 
 	velocity += Steering.Linear;
@@ -153,7 +153,7 @@ void AAICharacter::DrawDebug()
 		FVector(0.f, 0.f, 100.f)
 	};*/
 
-	//SetPath(this, TEXT("follow_path"), TEXT("path"), PathPoints, 5.0f, PathMaterial);
+	SetPath(this, TEXT("follow_path"), TEXT("path"), PathPoints, 5.0f, PathMaterial);
 
 	//FVector dir(cos(FMath::DegreesToRadians(m_params.targetRotation)), 0.0f, sin(FMath::DegreesToRadians(m_params.targetRotation)));
 	//SetArrow(this, TEXT("targetRotation"), dir, 80.0f);
