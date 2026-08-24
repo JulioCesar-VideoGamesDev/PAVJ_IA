@@ -46,10 +46,7 @@ void AAICharacter::BeginPlay()
 
 	//----------------------------------------------------
 
-	ReadObstacles("XMLs/obstacles.xml", m_obstacles);
-
-	// Set ObstaclesArray.
-	ObstaclesArray = m_obstacles.GetObstaclesArray();
+	ReadObstacles("XMLs/obstacles.xml", ObstaclesArray);
 
 	//----------------------------------------------------
 
@@ -57,16 +54,29 @@ void AAICharacter::BeginPlay()
 
 	PathFollowingSteering = NewObject<UPathFollowingSteering>(this);
 	
-	if (PathFollowingSteering)
+	if (::IsValid(PathFollowingSteering))
 	{
 		PathFollowingSteering->AICharacter = this;
 		PathFollowingSteering->PathPoints = m_paths.PathPoints;
+		PathFollowingSteering->DrawPath();
 		PathFollowingSteering->IsLooped = true;
+
+		PathFollowingSteering->EnableObstacleAvoidance = true;
+		//PathFollowingSteering->AvoidanceStrength = 1000.f;
+		PathFollowingSteering->ObstacleAvoidanceWeight = 20.f;
+	}
+
+	//ObstacleAvoidanceSteering = NewObject<UObstacleAvoidanceSteering>(this);
+
+	if (::IsValid(ObstacleAvoidanceSteering))
+	{
+		ObstacleAvoidanceSteering->AICharacter = this;
+		ObstacleAvoidanceSteering->DoDrawDebug = true;
 	}
 
 	AlignToMovementSteering = NewObject<UAlignToMovementSteering>(this);
 
-	if (AlignToMovementSteering)
+	if (::IsValid(AlignToMovementSteering))
 	{
 		AlignToMovementSteering->AICharacter = this;
 	}
@@ -81,7 +91,7 @@ void AAICharacter::Tick(float DeltaTime)
 	// GET THE STEERING
 	FSteeringOutput Steering;
 
-	if (PathFollowingSteering)
+	if (::IsValid(PathFollowingSteering))
 	{
 		PathFollowingSteering->GetSteering(Steering);
 	}
@@ -136,10 +146,10 @@ void AAICharacter::OnClickedLeft(const FVector& mousePosition)
 void AAICharacter::OnClickedRight(const FVector& mousePosition)
 {
 	m_params.targetPosition = mousePosition;
-
-	FVector dir = (mousePosition - GetActorLocation()).GetSafeNormal();
-	/*float angle = FMath::RadiansToDegrees(atan2(dir.Z, dir.X));
-	m_params.targetRotation = angle;*/
+	if (::IsValid(SeekSteering))
+	{
+		SeekSteering->TargetPosition = mousePosition;
+	}
 }
 
 void AAICharacter::DrawDebug()
@@ -153,7 +163,7 @@ void AAICharacter::DrawDebug()
 		FVector(0.f, 0.f, 100.f)
 	};*/
 
-	SetPath(this, TEXT("follow_path"), TEXT("path"), PathPoints, 5.0f, PathMaterial);
+	//SetPath(this, TEXT("follow_path"), TEXT("path"), PathPoints, 5.0f, PathMaterial);
 
 	//FVector dir(cos(FMath::DegreesToRadians(m_params.targetRotation)), 0.0f, sin(FMath::DegreesToRadians(m_params.targetRotation)));
 	//SetArrow(this, TEXT("targetRotation"), dir, 80.0f);
@@ -167,9 +177,9 @@ void AAICharacter::DrawDebug()
 	DrawDebugSphere(
 		GetWorld(),
 		m_params.targetPosition,
-		20.f,
+		5.f,
 		16,              // Segments
-		FColor::Red,
+		FColor::Green,
 		false,           // Persistent
 		0.f              // Duration this frame
 	);

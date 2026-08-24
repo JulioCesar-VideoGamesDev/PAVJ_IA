@@ -14,7 +14,8 @@
 				"UnrealEd",
 				"ProceduralMeshComponent",
 				"Paper2D",
-				"GeometryCore"
+				"GeometryCore",
+				"CoreUObject"
 			]
 		}
 	],

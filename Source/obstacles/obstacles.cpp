@@ -6,9 +6,9 @@
 #include "Misc/Paths.h"
 
 
-bool ReadObstacles(const char* filename, FObstacles& obstacles)
+bool ReadObstacles(const char* filename, TArray<FObstacleAttr>& obstaclesArray)
 {
-	obstacles.ObstaclesArray.Empty();
+	obstaclesArray.Empty();
 
 	FString CurrentDirectory = FPlatformProcess::GetCurrentWorkingDirectory();
 
@@ -57,8 +57,8 @@ bool ReadObstacles(const char* filename, FObstacles& obstacles)
 				float r;
 				FDefaultValueHelper::ParseFloat(value, r);
 
-				obstacles.ObstaclesArray.Add(
-					ObstacleAttr(FVector(x, 0.f, y), r)					
+				obstaclesArray.Add(
+					FObstacleAttr(FVector(x, 0.f, y), r)					
 				);
 			}
 		}

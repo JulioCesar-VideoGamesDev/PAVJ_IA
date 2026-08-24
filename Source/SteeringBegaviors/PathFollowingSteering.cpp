@@ -1,24 +1,25 @@
 #include "PathFollowingSteering.h"
 #include "Characters/AICharacter.h"
 #include "ArriveSteering.h"
+#include "ObstacleAvoidanceSteering.h"
 
 #include "debug/debugdraw.h"
 
 void UPathFollowingSteering::GetSteering(FSteeringOutput& SteeringOutput)
 {
-    FSteeringOutput Result;
+    FSteeringOutput ResultPathFollowing;
 
     if (!::IsValid(AICharacter))
     {
         UE_LOG(LogTemp, Error, TEXT("AICHARACTER ISN'T VALID"));
 
-        SteeringOutput = Result;
+        SteeringOutput = ResultPathFollowing;
         return;
     }
 
     if (PathPoints.Num() < 2)
     {
-        SteeringOutput = Result;
+        SteeringOutput = ResultPathFollowing;
         return;
     }
 
@@ -26,6 +27,7 @@ void UPathFollowingSteering::GetSteering(FSteeringOutput& SteeringOutput)
     {
         ArriveDelegate = NewObject<UArriveSteering>(this);
         ArriveDelegate->AICharacter = AICharacter;
+        ArriveDelegate->DoDrawDebug = false;
     }
 
     // Shearch for the closest point in the path.
@@ -36,29 +38,70 @@ void UPathFollowingSteering::GetSteering(FSteeringOutput& SteeringOutput)
 
     ArriveDelegate->TargetPosition = AdvanceAlongPath(ClosestPoint, AICharacter->GetParams().look_ahead);
 
+    DrawDebugSphere(
+        GetWorld(),
+        ArriveDelegate->TargetPosition,
+        5.f,
+        16,              // Segments
+        FColor::Green,
+        false,           // Persistent
+        0.f              // Duration this frame
+    );
+
     // Then we do seek.
-    ArriveDelegate->GetSteering(Result);
+    ArriveDelegate->GetSteering(ResultPathFollowing);
 
-    SteeringOutput = Result;
-}
+    //UE_LOG(LogTemp, Warning, TEXT("PathFollowingSteering: %s"), *ResultPathFollowing.Linear.ToString());
+    //UE_LOG(LogTemp, Warning, TEXT("PathFollowingSteering: %f"), ResultPathFollowing.Linear.Y);
 
-FVector UPathFollowingSteering::ClosestPointOnSegment(
-    const FVector& Point,
-    const FVector& A,
-    const FVector& B)
-{
-    FVector AB = B - A;
+    SteeringOutput = ResultPathFollowing;
 
-    float LengthSquared = AB.SizeSquared();
+    if (!EnableObstacleAvoidance)
+    {
+        return;
+    }
 
-    if (LengthSquared <= KINDA_SMALL_NUMBER)
-        return A;
+    if (!::IsValid(ObstacleAvoidanceDelegate))
+    {
+        ObstacleAvoidanceDelegate = NewObject<UObstacleAvoidanceSteering>(this);
+        ObstacleAvoidanceDelegate->AICharacter = AICharacter;
+        ObstacleAvoidanceDelegate->ObstaclesArray = AICharacter->GetObstaclesArray();
+        ObstacleAvoidanceDelegate->AvoidanceStrength = AvoidanceStrength;
+    }
 
-    float T = FVector::DotProduct(Point - A, AB) / LengthSquared;
+    FSteeringOutput ResultObstacleAvoidance;
 
-    T = FMath::Clamp(T, 0.f, 1.f);
+    ObstacleAvoidanceDelegate->FindCollisionAndGetSteering(
+        ResultPathFollowing,
+        ResultObstacleAvoidance);
 
-    return A + AB * T;
+    if (!ObstacleAvoidanceDelegate->GetFoundedCollision().bWillCollide) return;
+
+    //UE_LOG(LogTemp, Warning, TEXT("ObstacleAvoidanceSteering: %s"), *ResultObstacleAvoidance.Linear.ToString());
+    //UE_LOG(LogTemp, Warning, TEXT("ObstacleAvoidanceSteering: %f"), ResultObstacleAvoidance.Linear.Y);
+    
+    SteeringOutput.Linear =
+        ResultPathFollowing.Linear +
+        ResultObstacleAvoidance.Linear * ObstacleAvoidanceWeight;
+    UE_LOG(LogTemp, Warning, TEXT("ObstacleAvoidanceWeight: %f"), ObstacleAvoidanceWeight);
+
+    SteeringOutput.Linear.Normalize();
+    SteeringOutput.Linear *= AICharacter->GetParams().max_acceleration;
+    
+    DrawDebugLine(
+        GetWorld(),
+        AICharacter->GetActorLocation(),
+        AICharacter->GetActorLocation() +
+        SteeringOutput.Linear,
+        FColor::Green,
+        false,
+        0.f,
+        0,
+        5.f
+    );
+
+    //UE_LOG(LogTemp, Warning, TEXT("MegedSteerings: %s"), *SteeringOutput.Linear.ToString());
+    //UE_LOG(LogTemp, Warning, TEXT("MegedSteerings: %f"), SteeringOutput.Linear.Y);
 }
 
 // With this function we go segment by segment trying to get the point that is closest to us.
@@ -168,5 +211,23 @@ FVector UPathFollowingSteering::AdvanceAlongPath(
         
         CurrentSegment = Segment;
         CurrentPoint = PathPoints[Segment];
+    }
+}
+
+void UPathFollowingSteering::DrawPath()
+{
+    if (PathPoints.Num() == 0) return;
+
+    for (int32 i = 0; i < PathPoints.Num(); i++)
+    {
+        const int32 NextIndex = (i + 1) % PathPoints.Num();
+
+        DrawDebugLine(
+            GetWorld(),
+            PathPoints[i],
+            PathPoints[NextIndex],
+            FColor::Black,
+            true
+        );
     }
 }

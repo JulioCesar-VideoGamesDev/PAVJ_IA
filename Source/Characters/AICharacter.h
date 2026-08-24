@@ -56,9 +56,6 @@ protected:
 	// Struct that stores all the points defined in Content/XMLs/paths.xml
 	Paths m_paths;
 	
-	// Struct that stores all the obstacles defined in Content/XMLs/obstacles.xml
-	FObstacles m_obstacles;;
-	
 	// UObjectPtr for all the Steering Behaviors
 
 	UPROPERTY(BlueprintReadOnly, Category = "Steerings")
@@ -91,7 +88,7 @@ protected:
 
 
 	TArray<FVector> PathPoints;
-	TArray<ObstacleAttr> ObstaclesArray;
+	TArray<FObstacleAttr> ObstaclesArray;
 
 	FVector ClosestPoint;
 	FVector SeekPoint;
@@ -153,5 +150,10 @@ public:
 	TArray<FVector> GetPathPoints() const
 	{
 		return PathPoints;
+	}
+
+	TArray<FObstacleAttr> GetObstaclesArray() const
+	{
+		return ObstaclesArray;
 	}
 };

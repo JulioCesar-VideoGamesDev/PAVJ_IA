@@ -3,19 +3,12 @@
 
 #include <CoreMinimal.h>
 
-struct ObstacleAttr
+struct FObstacleAttr
 {
     FVector Position{ FVector::ZeroVector };
     float Radius{ 0.f };
 };
 
-struct FObstacles
-{
-    TArray<ObstacleAttr> ObstaclesArray;
-
-    TArray<ObstacleAttr> GetObstaclesArray() const { return ObstaclesArray; }
-};
-
-bool ReadObstacles(const char* filename, FObstacles& obstacles);
+bool ReadObstacles(const char* filename, TArray<FObstacleAttr>& obstaclesArray);
 
 #endif

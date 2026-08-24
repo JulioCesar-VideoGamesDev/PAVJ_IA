@@ -1,85 +1,260 @@
 #include "ObstacleAvoidanceSteering.h"
 #include "Characters/AICharacter.h"
 
-#include "debug/debugdraw.h"
+#include "DrawDebugHelpers.h"
 
-void UObstacleAvoidanceSteering::GetSteering(FSteeringOutput& SteeringOutput)
+void UObstacleAvoidanceSteering::FindCollisionAndGetSteering(const FSteeringOutput& InputSteering, FSteeringOutput& SteeringOutput)
 {
-    FSteeringOutput Result;
+    SteeringOutput = FSteeringOutput();
 
     if (!::IsValid(AICharacter))
     {
         UE_LOG(LogTemp, Error, TEXT("AICHARACTER ISN'T VALID"));
 
-        SteeringOutput = Result;
         return;
     }
 
-    FVector Position = AICharacter->GetActorLocation();
-    FVector Velocity = AICharacter->GetAICharacterCurrentVelocity();
+    DrawDebug();
 
-    if (Velocity.IsNearlyZero())
+    FoundedCollision = FindCollision(InputSteering);
+
+    if (FoundedCollision.bWillCollide) GetSteering(SteeringOutput);
+}
+
+FObstacleCollisionResult UObstacleAvoidanceSteering::FindCollision(const FSteeringOutput& InputSteering)
+{
+    FObstacleCollisionResult Result;
+
+    if (!::IsValid(AICharacter))
     {
-        SteeringOutput = Result;
+        UE_LOG(
+            LogTemp,
+            Error,
+            TEXT("AICHARACTER ISN'T VALID"));
+
+        return Result;
     }
 
-    FVector Direction = Velocity.GetSafeNormal();
+    const float TimeAhead =
+        AICharacter->GetParams().time_ahead;
 
-    const float LookAhead = 100.f;
-    const float CharacterRadius = AICharacter->GetParams().char_radius;
+    const FVector CurrentPosition =
+        AICharacter->GetActorLocation();
 
-    float BestProjection = TNumericLimits<float>::Max();
-    bool bCollision = false;
+    const FVector CurrentVelocity =
+        AICharacter->GetAICharacterCurrentVelocity();
 
-    FVector AvoidDirection;
+    const FVector FuturePosition =
+        CurrentPosition
+        + CurrentVelocity * TimeAhead
+        + 0.5f *
+        InputSteering.Linear *
+        TimeAhead *
+        TimeAhead;
 
-    for (const ObstacleAttr& Obstacle : ObstaclesStruct.ObstaclesArray)
+    const float CharacterRadius =
+        AICharacter->GetParams().char_radius;
+
+    float ClosestDistanceSquared =
+        TNumericLimits<float>::Max();
+
+    for (int32 i = 0; i < ObstaclesArray.Num(); ++i)
     {
-        FVector RO = Obstacle.Position - Position;
+        const FObstacleAttr& Obstacle =
+            ObstaclesArray[i];
 
-        float Projection =
-            FVector::DotProduct(RO, Direction);
+        const FVector ClosestPoint =
+            ClosestPointOnSegment(
+                Obstacle.Position,
+                CurrentPosition,
+                FuturePosition);
 
-        if (Projection < 0.f)
-            continue;
+        const float CollisionRadius =
+            CharacterRadius +
+            Obstacle.Radius;
 
-        if (Projection > LookAhead)
-            continue;
+        const float DistanceSquared =
+            FVector::DistSquared(
+                ClosestPoint,
+                Obstacle.Position);
 
-        FVector ClosestPoint =
-            Position +
-            Direction * Projection;
-
-        FVector Diff =
-            ClosestPoint -
-            Obstacle.Position;
-
-        float Distance = Diff.Length();
-
-        if (Distance < Obstacle.Radius + CharacterRadius)
+        if (DistanceSquared <=
+            FMath::Square(CollisionRadius))
         {
-            if (Projection < BestProjection)
+            if (DistanceSquared <
+                ClosestDistanceSquared)
             {
-                BestProjection = Projection;
-                bCollision = true;
+                ClosestDistanceSquared =
+                    DistanceSquared;
 
-                AvoidDirection = Diff.GetSafeNormal();
+                Result.bWillCollide = true;
+                Result.ObstacleIndex = i;
+                Result.ClosestPoint = ClosestPoint;
+                Result.Difference =
+                    ClosestPoint -
+                    Obstacle.Position;
+                Result.Distance =
+                    FMath::Sqrt(DistanceSquared);
             }
         }
     }
 
-    if (!bCollision)
+    return Result;
+}
+
+void UObstacleAvoidanceSteering::GetSteering(FSteeringOutput& SteeringOutput)
+{
+    SteeringOutput = FSteeringOutput();
+
+    if (!::IsValid(AICharacter))
     {
-        Result.Linear = FVector::ZeroVector;
-        Result.Angular = 0.f;
-        SteeringOutput = Result;
+        UE_LOG(LogTemp, Error, TEXT("AICHARACTER ISN'T VALID"));
+
+        return;
     }
 
-    Result.Linear =
-        AvoidDirection *
+    if (!FoundedCollision.bWillCollide ||
+        !ObstaclesArray.IsValidIndex(FoundedCollision.ObstacleIndex))
+    {
+        return;
+    }
+
+    const FObstacleAttr& Obstacle =
+        ObstaclesArray[FoundedCollision.ObstacleIndex];
+
+    const FVector CurrentPosition =
+        AICharacter->GetActorLocation();
+
+    const FVector CurrentVelocity =
+        AICharacter->GetAICharacterCurrentVelocity();
+
+    const FVector MovementDirection =
+        CurrentVelocity.GetSafeNormal();
+
+    if (MovementDirection.IsNearlyZero())
+    {
+        return;
+    }
+
+    // Vector from the obstacle towards the closest point of our predicted trajectory.
+    
+    //const FVector Difference = FoundedCollision.Difference.GetSafeNormal();
+
+    const FVector ToObstacle =
+        (Obstacle.Position - CurrentPosition).GetSafeNormal();
+
+    // Generate the two possible directions perpendicular to the collision.
+
+    /*FVector AvoidanceDirection =
+        FVector(
+            -Difference.Z,
+            0.f,
+            Difference.X
+        ).GetSafeNormal();*/
+
+    FVector AvoidanceDirection = FVector::CrossProduct(ToObstacle, FVector(0.f, 1.f, 0.f));
+
+    // Determine on which side of our movement direction the obstacle is.
+
+    /*const FVector ToObstacle =
+        (Obstacle.Position - CurrentPosition).GetSafeNormal();*/
+
+    const float Cross =
+        FVector::CrossProduct(
+            AvoidanceDirection,
+            ToObstacle).Y;
+
+    // We want to move to the opposite side of the obstacle.
+
+    if (Cross > 0.f)
+    {
+        AvoidanceDirection *= -1.f;
+    }
+
+    // Distance that we still need to gain to be outside the collision radius.
+
+    const float CharacterRadius =
+        AICharacter->GetParams().char_radius;
+
+    const float CollisionRadius =
+        CharacterRadius +
+        Obstacle.Radius;
+
+    const float Penetration =
+        CollisionRadius -
+        FoundedCollision.Distance;
+
+    // More penetration = stronger avoidance.
+
+    float AccelerationMagnitude =
         AICharacter->GetParams().max_acceleration;
+        //Penetration * AvoidanceStrength;
 
-    Result.Angular = 0.f;
+    AccelerationMagnitude =
+        FMath::Clamp(
+            AccelerationMagnitude,
+            0.f,
+            AICharacter->GetParams().max_acceleration);
 
-    SteeringOutput = Result;
+    //UE_LOG(LogTemp, Warning, TEXT("AccelerationMagnitude: %f"), AccelerationMagnitude);
+
+    SteeringOutput.Linear =
+        AvoidanceDirection *
+        AccelerationMagnitude;
+
+    DrawDebugLine(
+        GetWorld(),
+        CurrentPosition,
+        CurrentPosition +
+        SteeringOutput.Linear,
+        FColor::Blue,
+        false,
+        0.f,
+        0,
+        5.f
+    );
+
+    DrawDebugLine(
+        GetWorld(),
+        CurrentPosition,
+        FoundedCollision.ClosestPoint,
+        FColor::Yellow,
+        false,
+        0.f,
+        0,
+        3.f
+    );
+
+    SteeringOutput.Angular = 0.f;
+}
+
+bool UObstacleAvoidanceSteering::WillCollide(FSteeringOutput InputSteering)
+{
+    return FindCollision(InputSteering).bWillCollide;
+}
+
+void UObstacleAvoidanceSteering::DrawDebug()
+{
+    DrawDebugSphere(
+        GetWorld(),
+        AICharacter->GetActorLocation(),
+        AICharacter->GetParams().char_radius,
+        16,              // Segments
+        FColor::Blue,
+        false,           // Persistent
+        0.f              // Duration this frame
+    );
+
+    for (const FObstacleAttr& Obstacle : ObstaclesArray)
+    {
+        DrawDebugSphere(
+            GetWorld(),
+            Obstacle.Position,
+            Obstacle.Radius,
+            16,              // Segments
+            FColor::Red,
+            false,           // Persistent
+            0.f              // Duration this frame
+        );
+    }
 }

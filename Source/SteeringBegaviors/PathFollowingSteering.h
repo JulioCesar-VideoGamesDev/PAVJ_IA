@@ -6,6 +6,7 @@
 
 class AAICharacter;
 class UArriveSteering;
+class UObstacleAvoidanceSteering;
 
 struct FClosestPointResult
 {
@@ -36,16 +37,23 @@ public:
     UPROPERTY()
     int32 CurrentSegment{ 0 }; // Each segment is the union of the previust PathPoint and the next PathPoint.
 
-    FVector ClosestPointOnSegment(const FVector& Point, const FVector& A, const FVector& B);
-
     FClosestPointResult GetClosestPoint(const FVector& Position);
 
     FVector AdvanceAlongPath(const FClosestPointResult& Closest, float Distance);
 
-    //FVector LastDesiredVelocity = FVector::ZeroVector;
-    //FVector LastAcceleration = FVector::ZeroVector;
+    void DrawPath();
 
 private:
+
     UPROPERTY()
     TObjectPtr<UArriveSteering> ArriveDelegate;
+
+    UPROPERTY()
+    TObjectPtr<UObstacleAvoidanceSteering> ObstacleAvoidanceDelegate;
+
+public:
+
+    bool EnableObstacleAvoidance{ false };
+    float AvoidanceStrength{ 0.f };
+    float ObstacleAvoidanceWeight{ 0.f };
 };
