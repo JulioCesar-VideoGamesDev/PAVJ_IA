@@ -78,6 +78,8 @@ bool ReadParams(const char* filename, Params& params)
 
 		ReadFloatNode(MyChildNode, "arrive_radius", params.arrive_radius);
 
+		ReadFloatNode(MyChildNode, "brake_min_speed", params.brake_min_speed);
+
 		paramElem = MyChildNode->FindChildNode(TEXT("targetPosition"));
 		if (paramElem)
 		{

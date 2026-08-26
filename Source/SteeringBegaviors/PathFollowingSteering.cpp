@@ -27,7 +27,20 @@ void UPathFollowingSteering::GetSteering(FSteeringOutput& SteeringOutput)
     {
         ArriveDelegate = NewObject<UArriveSteering>(this);
         ArriveDelegate->AICharacter = AICharacter;
+        ArriveDelegate->BrakeMinSpeed = AICharacter->GetParams().brake_min_speed;
         ArriveDelegate->DoDrawDebug = false;
+    }
+
+    if (!IsLooped && HasFinishedPath())
+    {
+        // If we finished the path and we have an Arrive
+        if (::IsValid(ArriveDelegate))
+        {
+            // We keep getting the arrive steering to stop the movement.
+            ArriveDelegate->GetSteering(ResultPathFollowing);
+            SteeringOutput = ResultPathFollowing;
+            return;
+        }
     }
 
     // Shearch for the closest point in the path.
@@ -51,9 +64,6 @@ void UPathFollowingSteering::GetSteering(FSteeringOutput& SteeringOutput)
     // Then we do seek.
     ArriveDelegate->GetSteering(ResultPathFollowing);
 
-    //UE_LOG(LogTemp, Warning, TEXT("PathFollowingSteering: %s"), *ResultPathFollowing.Linear.ToString());
-    //UE_LOG(LogTemp, Warning, TEXT("PathFollowingSteering: %f"), ResultPathFollowing.Linear.Y);
-
     SteeringOutput = ResultPathFollowing;
 
     if (!EnableObstacleAvoidance)
@@ -76,14 +86,10 @@ void UPathFollowingSteering::GetSteering(FSteeringOutput& SteeringOutput)
         ResultObstacleAvoidance);
 
     if (!ObstacleAvoidanceDelegate->GetFoundedCollision().bWillCollide) return;
-
-    //UE_LOG(LogTemp, Warning, TEXT("ObstacleAvoidanceSteering: %s"), *ResultObstacleAvoidance.Linear.ToString());
-    //UE_LOG(LogTemp, Warning, TEXT("ObstacleAvoidanceSteering: %f"), ResultObstacleAvoidance.Linear.Y);
     
     SteeringOutput.Linear =
         ResultPathFollowing.Linear +
         ResultObstacleAvoidance.Linear * ObstacleAvoidanceWeight;
-    UE_LOG(LogTemp, Warning, TEXT("ObstacleAvoidanceWeight: %f"), ObstacleAvoidanceWeight);
 
     SteeringOutput.Linear.Normalize();
     SteeringOutput.Linear *= AICharacter->GetParams().max_acceleration;
@@ -99,15 +105,103 @@ void UPathFollowingSteering::GetSteering(FSteeringOutput& SteeringOutput)
         0,
         5.f
     );
+}
 
-    //UE_LOG(LogTemp, Warning, TEXT("MegedSteerings: %s"), *SteeringOutput.Linear.ToString());
-    //UE_LOG(LogTemp, Warning, TEXT("MegedSteerings: %f"), SteeringOutput.Linear.Y);
+void UPathFollowingSteering::ResetPathFollowingWithPath(const TArray<FVector>& NewPath, bool bResetPosition)
+{
+    // Verify if the new path is valid.
+    if (NewPath.Num() < 2)
+    {
+        UE_LOG(LogTemp, Error, TEXT("ResetPathFollowingWithPath: Invalid Path (It's needed at least 2 points in it)"));
+        return;
+    }
+    
+    // Clean the last state of all the PathFollowing.
+    PathPoints.Empty();
+    CurrentSegment = 0;
+    bHasStopedPathFollowing = false;
+
+    // Copy the new path.
+    PathPoints = NewPath;
+
+    if (!::IsValid(ArriveDelegate))
+    {
+        UE_LOG(LogTemp, Error, TEXT("ResetPathFollowingWithPath: ArriveDelegate isn't valid when tryed to reset the path"));
+        return;
+    }
+
+    ArriveDelegate->TargetPosition = PathPoints[0];
+
+    UE_LOG(LogTemp, Log, TEXT("ResetPathFollowingWithPath: Path reseted with %d points. FirstPoint: %s"),
+        PathPoints.Num(), *PathPoints[0].ToString());
+}
+
+bool UPathFollowingSteering::HasFinishedPath() const
+{
+    if (IsLooped)
+        return false;
+
+    if (PathPoints.Num() < 2)
+    {
+        UE_LOG(LogTemp, Error, TEXT("Current path is not valid"));
+        return true;
+    }
+    
+    if (bHasStopedPathFollowing)
+        return true;
+
+    // If we are not in the last segment then we are not even close to finished.
+    if (CurrentSegment + 1 < PathPoints.Num())
+        return false;
+
+    if (AICharacter->GetAICharacterCurrentVelocity().Length() <= KINDA_SMALL_NUMBER)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+
+    return AICharacter->GetAICharacterCurrentVelocity().Length() <= KINDA_SMALL_NUMBER;
+}
+
+void UPathFollowingSteering::StopPathFollowing()
+{
+    bHasStopedPathFollowing = true;
+
+    if (ArriveDelegate)
+    {
+        ArriveDelegate->TargetPosition = AICharacter->GetActorLocation();
+    }
+
+    UE_LOG(LogTemp, Log, TEXT("PathFollowing: Stoped"));
+}
+
+void UPathFollowingSteering::ContinuePathFollowing()
+{
+    bHasStopedPathFollowing = false;
+
+    UE_LOG(LogTemp, Log, TEXT("PathFollowing: Continued"));
+}
+
+void UPathFollowingSteering::TogglePathFollowing()
+{
+    if (bHasStopedPathFollowing) ContinuePathFollowing();
+    else StopPathFollowing();
 }
 
 // With this function we go segment by segment trying to get the point that is closest to us.
 FClosestPointResult UPathFollowingSteering::GetClosestPoint(const FVector& Position)
 {
     FClosestPointResult Result = FClosestPointResult();
+
+    if (HasFinishedPath() && PathPoints.Num() > 0)
+    {
+        Result.Point = PathPoints.Last();
+        Result.SegmentIndex = PathPoints.Num() - 2;
+        return Result;
+    }
 
     FVector BestPoint = FVector::ZeroVector;
     float BestDistanceSq = TNumericLimits<float>::Max();
@@ -132,6 +226,11 @@ FClosestPointResult UPathFollowingSteering::GetClosestPoint(const FVector& Posit
             if (IsLooped)
             {
                 NextPoint %= PathPoints.Num();
+            }
+
+            if (NextPoint >= PathPoints.Num())
+            {
+                return;
             }
 
             FVector Candidate =
@@ -163,10 +262,15 @@ FVector UPathFollowingSteering::AdvanceAlongPath(
     const FClosestPointResult& Closest,
     float Distance)
 {
+    if (HasFinishedPath() && PathPoints.Num() > 0)
+    {
+        return PathPoints.Last();
+    }
+
     FVector CurrentPoint = Closest.Point;
     int32 Segment = Closest.SegmentIndex;
 
-    while (true) // Travvel all segments.
+    while (IsLooped || Segment < PathPoints.Num() -1) // Travvel all segments.
     {
         int32 NextPointIndex = Segment + 1;
 
@@ -188,8 +292,7 @@ FVector UPathFollowingSteering::AdvanceAlongPath(
         {
             CurrentSegment = Segment;
 
-            const FVector Direction =
-                (EndOfSegment - CurrentPoint).GetSafeNormal();
+            const FVector Direction = (EndOfSegment - CurrentPoint).GetSafeNormal();
 
             return CurrentPoint + Direction * Distance;
         }
@@ -206,17 +309,20 @@ FVector UPathFollowingSteering::AdvanceAlongPath(
         }
         else if (Segment >= PathPoints.Num() - 1) // We reached the end of the path.
         {
+            CurrentSegment = Segment;
             return PathPoints.Last();
         }
         
         CurrentSegment = Segment;
         CurrentPoint = PathPoints[Segment];
     }
+
+    return PathPoints.Last();
 }
 
 void UPathFollowingSteering::DrawPath()
 {
-    if (PathPoints.Num() == 0) return;
+    if (PathPoints.Num() < 2) return;
 
     for (int32 i = 0; i < PathPoints.Num(); i++)
     {

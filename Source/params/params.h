@@ -13,6 +13,7 @@ struct Params
     float max_speed{ 0.f };
     float max_acceleration{ 0.f };
     float arrive_radius{ 0.f };
+    float brake_min_speed{ 0.f };
     FVector targetPosition{ FVector::ZeroVector };
 
     // Angular

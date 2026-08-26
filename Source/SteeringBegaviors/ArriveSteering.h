@@ -11,5 +11,7 @@ class MPV_PRACTICAS_API UArriveSteering : public USeekSteering
 	
 public:
 
+	float BrakeMinSpeed{ 0.f };
+
 	virtual void GetSteering(FSteeringOutput& SteeringOutput) override;
 };

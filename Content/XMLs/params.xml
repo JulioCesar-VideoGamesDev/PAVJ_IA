@@ -6,6 +6,7 @@
 		<max_speed value="200"> </max_speed>
 		<max_acceleration value="180"> </max_acceleration>
 		<arrive_radius value="5"> </arrive_radius>
+		<brake_min_speed value="5"> </brake_min_speed>
 		<targetPosition x="400" y="0" z="300"> </targetPosition>
 		
 		<max_angular_speed value="90"> </max_angular_speed>

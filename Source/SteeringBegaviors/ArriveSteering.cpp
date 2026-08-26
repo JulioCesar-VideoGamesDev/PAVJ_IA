@@ -33,18 +33,26 @@ void UArriveSteering::GetSteering(FSteeringOutput& SteeringOutput)
     }
     else // Arriving
     {
-        float MaxSpeed = AICharacter->GetParams().max_speed;
-        float DesiredSpeed = 0.f;
+        // Ensure that we stop the movement
+        if (AICharacter->GetAICharacterCurrentVelocity().Length() < BrakeMinSpeed)
+        {
+            Result.Linear = AICharacter->GetAICharacterCurrentVelocity() * -1;
+        }
+        else
+        {
+            float MaxSpeed = AICharacter->GetParams().max_speed;
+            float DesiredSpeed = 0.f;
 
-        DesiredSpeed = MaxSpeed * (Distance / AICharacter->GetParams().arrive_radius);
-        //DesiredSpeed = AICharacter->GetAIAICharacterCurrentVelocity().Size() * Distance / AICharacter->GetParams().arrive_radius;
+            DesiredSpeed = MaxSpeed * (Distance / AICharacter->GetParams().arrive_radius);
+            //DesiredSpeed = AICharacter->GetAIAICharacterCurrentVelocity().Size() * Distance / AICharacter->GetParams().arrive_radius;
 
-        DesiredSpeed = FMath::Min(DesiredSpeed, MaxSpeed);
-        FVector DesiredVelocity = Direction * DesiredSpeed;
+            DesiredSpeed = FMath::Min(DesiredSpeed, MaxSpeed);
+            FVector DesiredVelocity = Direction * DesiredSpeed;
 
-        Result.Linear = DesiredVelocity - AICharacter->GetAICharacterCurrentVelocity();
+            Result.Linear = DesiredVelocity - AICharacter->GetAICharacterCurrentVelocity();
 
-        // If we have a max_deceleration then we would clamp it here.
+            // If we have a max_deceleration then we would clamp it here.
+        }
 
         Result.Angular = 0.0f;
 

@@ -24,6 +24,9 @@ class UAlignToMovementSteering;
 class UPathFollowingSteering;
 class UObstacleAvoidanceSteering;
 
+// PathFinding
+class UPathFinder;
+
 UCLASS()
 class MPV_PRACTICAS_API AAICharacter : public APawn
 {
@@ -76,6 +79,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Steerings")
 	TObjectPtr<UObstacleAvoidanceSteering> ObstacleAvoidanceSteering;
 
+	UPROPERTY(BlueprintReadOnly, Category = "PathFinder")
+	TObjectPtr<UPathFinder> PathFinder;
+
 protected:
 
 	float speed{ 0.f };
@@ -105,6 +111,9 @@ public:
 	void OnClickedLeft(const FVector& mousePosition);
 	UFUNCTION(BlueprintCallable, Category = "AIFunctions")
 	void OnClickedRight(const FVector& mousePosition);
+
+	UFUNCTION(BlueprintCallable, Category = "AIFunctions")
+	void OnPressedSpace();
 	
 	const Params& GetParams() const { return m_params; }
 

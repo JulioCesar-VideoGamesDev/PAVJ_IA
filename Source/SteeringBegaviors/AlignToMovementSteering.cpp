@@ -27,7 +27,7 @@ void UAlignToMovementSteering::GetSteering(FSteeringOutput& SteeringOutput)
     if (Velocity.IsNearlyZero())
     {
         Result.Linear = FVector::ZeroVector;
-        Result.Angular = 0.f;
+        Result.Angular = AICharacter->GetAICharacterCurrentAngularVelocity() * -1;
 
         SteeringOutput = Result;
         return;

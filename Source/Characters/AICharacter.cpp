@@ -17,6 +17,9 @@
 #include "SteeringBegaviors/PathFollowingSteering.h"
 #include "SteeringBegaviors/ObstacleAvoidanceSteering.h"
 
+// PathFinding
+#include "PathFinding/PathFinder.h"
+
 // Sets default values
 AAICharacter::AAICharacter()
 {
@@ -49,6 +52,24 @@ void AAICharacter::BeginPlay()
 	ReadObstacles("XMLs/obstacles.xml", ObstaclesArray);
 
 	//----------------------------------------------------
+	
+	PathFinder = NewObject<UPathFinder>(this);
+
+	if (::IsValid(PathFinder))
+	{
+		PathFinder->World = GetWorld();
+		PathFinder->CellSize = 100.f;
+		PathFinder->GridOrigin = FVector(-500, 0, -500);  // Origin in XZ  axis.
+
+		if (!PathFinder->LoadGridFromFile("TXTs/grid_map.txt", "TXTs/grid_cost_config.txt"))
+		{
+			// If it fails we create the default grid.
+			PathFinder->SetupDefaultGrid(10, 10, 100.0f);
+			UE_LOG(LogTemp, Warning, TEXT("Using default grid."));
+		}
+	}
+	
+	//----------------------------------------------------
 
 	// INITIALIZE STEERINGS
 
@@ -57,9 +78,9 @@ void AAICharacter::BeginPlay()
 	if (::IsValid(PathFollowingSteering))
 	{
 		PathFollowingSteering->AICharacter = this;
-		PathFollowingSteering->PathPoints = m_paths.PathPoints;
+		PathFollowingSteering->ResetPathFollowingWithPath(m_paths.PathPoints);
 		PathFollowingSteering->DrawPath();
-		PathFollowingSteering->IsLooped = true;
+		PathFollowingSteering->IsLooped = false;
 
 		PathFollowingSteering->EnableObstacleAvoidance = true;
 		//PathFollowingSteering->AvoidanceStrength = 1000.f;
@@ -87,6 +108,14 @@ void AAICharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	current_angle = GetActorAngle();
+
+	// SET THE GRID
+
+	if (PathFinder)
+	{
+		PathFinder->DrawGrid(true);
+		PathFinder->DrawPath(PathFinder->GetLastPath());
+	}
 
 	// GET THE STEERING
 	FSteeringOutput Steering;
@@ -140,15 +169,47 @@ void AAICharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 void AAICharacter::OnClickedLeft(const FVector& mousePosition)
 {
-	SetActorLocation(mousePosition);
+	//SetActorLocation(mousePosition);
+
+	if (!::IsValid(PathFinder)) return;
+
+	PathFinder->CurrentStart = PathFinder->GetCellAtLocation(mousePosition);
+
+	// If we already have an end, we calculate the path.
+	if (PathFinder->CurrentEnd)
+	{
+		TArray<FVector> Path = PathFinder->FindPath(PathFinder->CurrentStart->WorldLocation, PathFinder->CurrentEnd->WorldLocation);
+
+		if (::IsValid(PathFollowingSteering))
+		{
+			PathFollowingSteering->ResetPathFollowingWithPath(Path);
+		}
+	}
 }
 
 void AAICharacter::OnClickedRight(const FVector& mousePosition)
 {
-	m_params.targetPosition = mousePosition;
-	if (::IsValid(SeekSteering))
+	PathFinder->CurrentEnd = PathFinder->GetCellAtLocation(mousePosition);
+
+	PathFinder->CurrentStart = PathFinder->GetCellAtLocation(GetActorLocation());
+
+	if (PathFinder->CurrentStart)
 	{
-		SeekSteering->TargetPosition = mousePosition;
+		TArray<FVector> Path = PathFinder->FindPath(PathFinder->CurrentStart->WorldLocation, PathFinder->CurrentEnd->WorldLocation);
+
+		if (::IsValid(PathFollowingSteering))
+		{
+			PathFollowingSteering->ResetPathFollowingWithPath(Path);
+		}
+	}
+}
+
+void AAICharacter::OnPressedSpace()
+{
+	if (::IsValid(PathFollowingSteering))
+	{
+		PathFollowingSteering->TogglePathFollowing();
+		return;
 	}
 }
 

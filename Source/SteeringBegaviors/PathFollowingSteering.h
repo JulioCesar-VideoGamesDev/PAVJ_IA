@@ -31,11 +31,20 @@ public:
     UPROPERTY()
     bool IsLooped{ false };
 
-    UPROPERTY()
-    TArray<FVector> PathPoints;
+    UFUNCTION(BlueprintCallable, Category = "Steering")
+    void ResetPathFollowingWithPath(const TArray<FVector>& NewPath, bool bResetPosition = false);
 
-    UPROPERTY()
-    int32 CurrentSegment{ 0 }; // Each segment is the union of the previust PathPoint and the next PathPoint.
+    UFUNCTION(BlueprintCallable, Category = "Steering")
+    bool HasFinishedPath() const;
+
+    UFUNCTION(BlueprintCallable, Category = "Steering")
+    void StopPathFollowing();
+
+    UFUNCTION(BlueprintCallable, Category = "Steering")
+    void ContinuePathFollowing();
+
+    UFUNCTION(BlueprintCallable, Category = "Steering")
+    void TogglePathFollowing();
 
     FClosestPointResult GetClosestPoint(const FVector& Position);
 
@@ -50,6 +59,14 @@ private:
 
     UPROPERTY()
     TObjectPtr<UObstacleAvoidanceSteering> ObstacleAvoidanceDelegate;
+
+    bool bHasStopedPathFollowing{ false };
+
+    UPROPERTY()
+    TArray<FVector> PathPoints;
+
+    UPROPERTY()
+    int32 CurrentSegment{ 0 }; // Each segment is the union of the previust PathPoint and the next PathPoint.
 
 public:
 
