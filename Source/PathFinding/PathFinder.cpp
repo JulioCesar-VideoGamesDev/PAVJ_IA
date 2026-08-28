@@ -233,13 +233,13 @@ bool UPathFinder::LoadGridFromFile(FString FilePath, FString CostConfigPath)
 
     // Parse the grid.
     TArray<FString> GridLines;
-    FileContent.ParseIntoArrayLines(GridLines);
+    FileContent.ParseIntoArrayLines(GridLines); // Each item of the array is a string with one line of the map.
 
-    GridSize.X = GridLines[0].Len();
-    GridSize.Y = GridLines.Num();
+    GridSize.X = GridLines[0].Len(); // Length of the first line.
+    GridSize.Y = GridLines.Num(); // Number o flines.
 
     Grid.Empty();
-    Grid.Reserve(GridSize.X * GridSize.Y);
+    Grid.Reserve(GridSize.X * GridSize.Y); // Reserve the memory for the Grid.
 
     for (int32 Y = 0; Y < GridSize.Y; ++Y)
     {
@@ -252,12 +252,12 @@ bool UPathFinder::LoadGridFromFile(FString FilePath, FString CostConfigPath)
             bool bWalkable = true;
 
             // Set the properties based on the character.
-            if (CostMap.Contains(Char))
+            if (CostMap.Contains(Char)) // Character of the CostFile.
             {
                 Cost = CostMap[Char];
                 bWalkable = (Cost > 0.f);
             }
-            else if (Char == '#')
+            else if (Char == '#') // Character of the NotWalkable cells.
             {
                 bWalkable = false;
                 Cost = 0.f;
@@ -286,6 +286,7 @@ bool UPathFinder::LoadGridFromFile(FString FilePath, FString CostConfigPath)
 
     UE_LOG(LogTemp, Log, TEXT("Pathfinder: Grid loaded - %dx%d, %d walkable cells."),
         GridSize.X, GridSize.Y, WalkableCount);
+
     return true;
 }
 
@@ -383,7 +384,6 @@ void UPathFinder::DrawGrid(bool bDrawCosts)
         // Draw cost if it's active.
         if (bDrawCosts && Cell.bIsWalkable && Cell.Cost != 1.f)
         {
-
             FString CostStr = FString::SanitizeFloat(Cell.Cost);
             DrawDebugString(World, Center + FVector(0, 15.f, 0), CostStr, nullptr, FColor::White, -1.f, false, 0.5f);
         }

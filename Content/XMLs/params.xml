@@ -17,6 +17,8 @@
 		<look_ahead value="40"> </look_ahead>
 		<time_ahead value="10"> </time_ahead>
 		
+		<obstacle_avoidance_strength value="100"> </obstacle_avoidance_strength>
+		<obstacle_avoidance_weight value="20"> </obstacle_avoidance_weight>
 		<char_radius value="10"> </char_radius>
 	</params>
 </root>

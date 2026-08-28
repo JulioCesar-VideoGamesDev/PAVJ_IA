@@ -79,13 +79,9 @@ void UPathFollowingSteering::GetSteering(FSteeringOutput& SteeringOutput)
         ObstacleAvoidanceDelegate->AvoidanceStrength = AvoidanceStrength;
     }
 
-    FSteeringOutput ResultObstacleAvoidance;
+    FSteeringOutput ResultObstacleAvoidance = ObstacleAvoidanceDelegate->FindCollisionAndGetSteering(ResultPathFollowing);
 
-    ObstacleAvoidanceDelegate->FindCollisionAndGetSteering(
-        ResultPathFollowing,
-        ResultObstacleAvoidance);
-
-    if (!ObstacleAvoidanceDelegate->GetFoundedCollision().bWillCollide) return;
+    if (!ObstacleAvoidanceDelegate->GetFoundCollision().bWillCollide) return;
     
     SteeringOutput.Linear =
         ResultPathFollowing.Linear +

@@ -26,7 +26,9 @@ struct Params
     float look_ahead{ 0.f };
     float time_ahead{ 0.f };
 
-    // Char
+    // ObstacleAvoidance
+    float obstacle_avoidance_strength{ 0.f };
+    float obstacle_avoidance_weight{ 0.f };
     float char_radius{ 0.f };
 };
 

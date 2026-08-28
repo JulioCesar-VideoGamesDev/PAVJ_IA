@@ -117,6 +117,8 @@ bool ReadParams(const char* filename, Params& params)
 
 		// OBSTACLE AVOIDANCE -------------------------------
 
+		ReadFloatNode(MyChildNode, "obstacle_avoidance_strength", params.obstacle_avoidance_strength);
+		ReadFloatNode(MyChildNode, "obstacle_avoidance_weight", params.obstacle_avoidance_weight);
 		ReadFloatNode(MyChildNode, "char_radius", params.char_radius);
 	}
 	return true;

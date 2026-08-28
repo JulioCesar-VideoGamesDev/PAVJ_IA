@@ -27,6 +27,21 @@ class UObstacleAvoidanceSteering;
 // PathFinding
 class UPathFinder;
 
+UENUM(BlueprintType)
+enum class SteeringLinearVelocity : uint8
+{
+	Seek UMETA(DisplayName = "Seek"),
+	Arrive UMETA(DisplayName = "Arrive"),
+	PathFollowing UMETA(DisplayName = "PathFollowing")
+};
+
+UENUM(BlueprintType)
+enum class SteeringAngularVelocity : uint8
+{
+	Align UMETA(DisplayName = "Align"),
+	AlignToMovement UMETA(DisplayName = "AlignToMovement")
+};
+
 UCLASS()
 class MPV_PRACTICAS_API AAICharacter : public APawn
 {
@@ -59,6 +74,18 @@ protected:
 	// Struct that stores all the points defined in Content/XMLs/paths.xml
 	Paths m_paths;
 	
+	// Enum to control which Steering of LinearVelocity are we using.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steerings|State")
+	SteeringLinearVelocity StateLinearVel{ SteeringLinearVelocity::PathFollowing };
+
+	// Enum to control which Steering of AngularVelocity are we using.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steerings|State")
+	SteeringAngularVelocity StateAngularVel{ SteeringAngularVelocity::AlignToMovement };
+
+	// Enables the SetActorLocation on the leftclick callback.
+	UPROPERTY(EditDefaultsOnly, Category = "Steerings|Controllers")
+	bool bEnableLeftClickTP{ false };
+
 	// UObjectPtr for all the Steering Behaviors
 
 	UPROPERTY(BlueprintReadOnly, Category = "Steerings")
@@ -76,11 +103,20 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Steerings")
 	TObjectPtr<UPathFollowingSteering> PathFollowingSteering;
 	
+	UPROPERTY(EditDefaultsOnly, Category = "Steerings|PathFollowing")
+	bool bIsPathFollowingLooped{ false };
+
 	UPROPERTY(BlueprintReadOnly, Category = "Steerings")
 	TObjectPtr<UObstacleAvoidanceSteering> ObstacleAvoidanceSteering;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Steerings|PathFinder")
+	bool bEnableObstacleAvoidance{ false };
+
 	UPROPERTY(BlueprintReadOnly, Category = "PathFinder")
 	TObjectPtr<UPathFinder> PathFinder;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Steerings|Controllers")
+	bool bEnablePathfinding_Grid{ false };
 
 protected:
 

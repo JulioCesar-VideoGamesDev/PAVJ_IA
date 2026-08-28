@@ -53,19 +53,22 @@ void AAICharacter::BeginPlay()
 
 	//----------------------------------------------------
 	
-	PathFinder = NewObject<UPathFinder>(this);
-
-	if (::IsValid(PathFinder))
+	if (bEnablePathfinding_Grid)
 	{
-		PathFinder->World = GetWorld();
-		PathFinder->CellSize = 100.f;
-		PathFinder->GridOrigin = FVector(-500, 0, -500);  // Origin in XZ  axis.
+		PathFinder = NewObject<UPathFinder>(this);
 
-		if (!PathFinder->LoadGridFromFile("TXTs/grid_map.txt", "TXTs/grid_cost_config.txt"))
+		if (::IsValid(PathFinder))
 		{
-			// If it fails we create the default grid.
-			PathFinder->SetupDefaultGrid(10, 10, 100.0f);
-			UE_LOG(LogTemp, Warning, TEXT("Using default grid."));
+			PathFinder->World = GetWorld();
+			PathFinder->CellSize = 100.f;
+			PathFinder->GridOrigin = FVector(-500, 0, -500);  // Origin in XZ  axis.
+
+			if (!PathFinder->LoadGridFromFile("TXTs/grid_map.txt", "TXTs/grid_cost_config.txt"))
+			{
+				// If it fails we create the default grid.
+				//PathFinder->SetupDefaultGrid(10, 10, 100.0f);
+				UE_LOG(LogTemp, Warning, TEXT("Using default grid."));
+			}
 		}
 	}
 	
@@ -73,33 +76,83 @@ void AAICharacter::BeginPlay()
 
 	// INITIALIZE STEERINGS
 
-	PathFollowingSteering = NewObject<UPathFollowingSteering>(this);
-	
-	if (::IsValid(PathFollowingSteering))
+	switch (StateLinearVel)
 	{
-		PathFollowingSteering->AICharacter = this;
-		PathFollowingSteering->ResetPathFollowingWithPath(m_paths.PathPoints);
-		PathFollowingSteering->DrawPath();
-		PathFollowingSteering->IsLooped = false;
+	case SteeringLinearVelocity::Seek:
+		SeekSteering = NewObject<USeekSteering>(this);
 
-		PathFollowingSteering->EnableObstacleAvoidance = true;
-		//PathFollowingSteering->AvoidanceStrength = 1000.f;
-		PathFollowingSteering->ObstacleAvoidanceWeight = 20.f;
+		if (::IsValid(SeekSteering))
+		{
+			SeekSteering->AICharacter = this;
+			SeekSteering->TargetPosition = m_params.targetPosition;
+			SeekSteering->DoDrawDebug = true;
+		}
+
+		break;
+	case SteeringLinearVelocity::Arrive:
+		ArriveSteering = NewObject<UArriveSteering>(this);
+
+		if (::IsValid(ArriveSteering))
+		{
+			ArriveSteering->AICharacter = this;
+			ArriveSteering->TargetPosition = m_params.targetPosition;
+			ArriveSteering->DoDrawDebug = true;
+			ArriveSteering->BrakeMinSpeed = m_params.brake_min_speed;
+		}
+
+		break;
+	case SteeringLinearVelocity::PathFollowing:
+		PathFollowingSteering = NewObject<UPathFollowingSteering>(this);
+
+		if (::IsValid(PathFollowingSteering))
+		{
+			PathFollowingSteering->AICharacter = this;
+			PathFollowingSteering->ResetPathFollowingWithPath(m_paths.PathPoints);
+			PathFollowingSteering->DrawPath();
+			PathFollowingSteering->IsLooped = bIsPathFollowingLooped;
+
+			PathFollowingSteering->EnableObstacleAvoidance = bEnableObstacleAvoidance;
+			PathFollowingSteering->ObstacleAvoidanceWeight = m_params.obstacle_avoidance_weight;
+			PathFollowingSteering->AvoidanceStrength = m_params.obstacle_avoidance_strength;
+		}
+
+		break;
+	default:
+		break;
 	}
 
-	//ObstacleAvoidanceSteering = NewObject<UObstacleAvoidanceSteering>(this);
-
-	if (::IsValid(ObstacleAvoidanceSteering))
+	switch (StateAngularVel)
 	{
+	case SteeringAngularVelocity::Align:
+		AlignSteering = NewObject<UAlignSteering>(this);
+
+		if (::IsValid(AlignSteering))
+		{
+			AlignSteering->AICharacter = this;
+			AlignSteering->TargetRotation = m_params.targetRotation;
+		}
+
+		break;
+	case SteeringAngularVelocity::AlignToMovement:
+		AlignToMovementSteering = NewObject<UAlignToMovementSteering>(this);
+
+		if (::IsValid(AlignToMovementSteering))
+		{
+			AlignToMovementSteering->AICharacter = this;
+		}
+
+		break;
+	default:
+		break;
+	}
+
+	if (bEnableObstacleAvoidance && !::IsValid(PathFollowingSteering))
+	{
+		ObstacleAvoidanceSteering = NewObject<UObstacleAvoidanceSteering>(this);
 		ObstacleAvoidanceSteering->AICharacter = this;
+		ObstacleAvoidanceSteering->ObstaclesArray = ObstaclesArray;
+		ObstacleAvoidanceSteering->AvoidanceStrength = m_params.obstacle_avoidance_strength;
 		ObstacleAvoidanceSteering->DoDrawDebug = true;
-	}
-
-	AlignToMovementSteering = NewObject<UAlignToMovementSteering>(this);
-
-	if (::IsValid(AlignToMovementSteering))
-	{
-		AlignToMovementSteering->AICharacter = this;
 	}
 }
 
@@ -120,9 +173,34 @@ void AAICharacter::Tick(float DeltaTime)
 	// GET THE STEERING
 	FSteeringOutput Steering;
 
-	if (::IsValid(PathFollowingSteering))
+	if (::IsValid(SeekSteering))
+	{
+		SeekSteering->GetSteering(Steering);
+	}
+	else if (::IsValid(ArriveSteering))
+	{
+		ArriveSteering->GetSteering(Steering);
+	}
+	else if (::IsValid(PathFollowingSteering))
 	{
 		PathFollowingSteering->GetSteering(Steering);
+	}
+
+	if (::IsValid(ObstacleAvoidanceSteering))
+	{
+		FSteeringOutput ObstacleAvoidanceSteeringResult = ObstacleAvoidanceSteering->FindCollisionAndGetSteering(Steering);
+		
+		if (ObstacleAvoidanceSteering->GetFoundCollision().bWillCollide)
+		{
+			FSteeringOutput CurrentSteering = Steering;
+
+			Steering.Linear =
+				CurrentSteering.Linear +
+				ObstacleAvoidanceSteeringResult.Linear * m_params.obstacle_avoidance_weight;
+
+			Steering.Linear.Normalize();
+			Steering.Linear *= m_params.max_acceleration;
+		}
 	}
 
 	velocity += Steering.Linear;
@@ -139,7 +217,11 @@ void AAICharacter::Tick(float DeltaTime)
 		GetActorLocation() +
 		velocity * DeltaTime);
 
-	if (AlignToMovementSteering)
+	if (::IsValid(AlignSteering))
+	{
+		AlignSteering->GetSteering(Steering);
+	}
+	else if (::IsValid(AlignToMovementSteering))
 	{
 		AlignToMovementSteering->GetSteering(Steering);
 	}
@@ -169,9 +251,12 @@ void AAICharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 void AAICharacter::OnClickedLeft(const FVector& mousePosition)
 {
-	//SetActorLocation(mousePosition);
+	if (bEnableLeftClickTP) SetActorLocation(mousePosition);
 
-	if (!::IsValid(PathFinder)) return;
+	if (!::IsValid(PathFinder))
+	{
+		return;
+	}
 
 	PathFinder->CurrentStart = PathFinder->GetCellAtLocation(mousePosition);
 
@@ -189,6 +274,12 @@ void AAICharacter::OnClickedLeft(const FVector& mousePosition)
 
 void AAICharacter::OnClickedRight(const FVector& mousePosition)
 {
+	m_params.targetPosition = mousePosition;
+	if (::IsValid(SeekSteering))SeekSteering->TargetPosition = mousePosition;
+	if (::IsValid(ArriveSteering))ArriveSteering->TargetPosition = mousePosition;
+
+	if (!::IsValid(PathFinder)) return;
+
 	PathFinder->CurrentEnd = PathFinder->GetCellAtLocation(mousePosition);
 
 	PathFinder->CurrentStart = PathFinder->GetCellAtLocation(GetActorLocation());
@@ -229,11 +320,11 @@ void AAICharacter::DrawDebug()
 	//FVector dir(cos(FMath::DegreesToRadians(m_params.targetRotation)), 0.0f, sin(FMath::DegreesToRadians(m_params.targetRotation)));
 	//SetArrow(this, TEXT("targetRotation"), dir, 80.0f);
 
-	TArray<TArray<FVector>> Polygons = {
+	/*TArray<TArray<FVector>> Polygons = {
 		{ FVector(0.f, 0.f, 0.f), FVector(100.f, 0.f, 0.f), FVector(100.f, 0.f, 100.0f), FVector(0.f, 0.f, 100.0f) },
 		{ FVector(100.f, 0.f, 0.f), FVector(200.f, 0.f, 0.f), FVector(200.f, 0.f, 100.0f) }
 	};
-	SetPolygons(this, TEXT("navmesh"), TEXT("mesh"), Polygons, NavmeshMaterial);
+	SetPolygons(this, TEXT("navmesh"), TEXT("mesh"), Polygons, NavmeshMaterial);*/
 
 	DrawDebugSphere(
 		GetWorld(),

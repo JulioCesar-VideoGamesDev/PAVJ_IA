@@ -7,7 +7,7 @@
 
 class AAICharacter;
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FObstacleCollisionResult
 {
     GENERATED_BODY()
@@ -33,34 +33,36 @@ public:
     UPROPERTY()
     TObjectPtr<AAICharacter> AICharacter;
 
+    //UPROPERTY()
     TArray<FObstacleAttr> ObstaclesArray;
+    
+    UFUNCTION(BlueprintCallable, Category = "Streering")
+    FSteeringOutput FindCollisionAndGetSteering(const FSteeringOutput& InputSteering);
+
+    UPROPERTY(EditDefaultsOnly, Category = "ObstacleAvoidance")
+    float AvoidanceStrength{ 0.f };
+
+    // Rturns if the AI will collide. -_-
+    UFUNCTION(BlueprintCallable, Category = "Streering")
+    bool WillCollide(FSteeringOutput InputSteering);
+
+    UPROPERTY(BlueprintReadWrite, Category = "ObstacleAvoidance|Debug")
+    bool DoDrawDebug{ false };
+
+    UFUNCTION(BlueprintCallable, Category = "Streering")
+    FObstacleCollisionResult GetFoundCollision() const { return FoundCollision; }
+
+private:
+
+    UFUNCTION(BlueprintCallable, Category = "Streering")
+    FObstacleCollisionResult FindCollision(const FSteeringOutput& InputSteering);
+
+    UPROPERTY(EditDefaultsOnly, Category = "ObstacleAvoidance")
+    FObstacleCollisionResult FoundCollision;
 
     UFUNCTION(BlueprintCallable, Category = "Streering")
     virtual void GetSteering(FSteeringOutput& SteeringOutput) override;
 
-    FObstacleCollisionResult FindCollision(
-        const FSteeringOutput& InputSteering);
-    
-    UFUNCTION(BlueprintCallable, Category = "Streering")
-    void FindCollisionAndGetSteering(
-        const FSteeringOutput& InputSteering,
-        FSteeringOutput& SteeringOutput);
-
-    UPROPERTY(EditDefaultsOnly, Category = "Obstacle Avoidance")
-    float AvoidanceStrength{ 10.f };
-
-    // Rturns if the AI will collide. -_-
-    UFUNCTION(BlueprintCallable, Category = "ObstacleDetection")
-    bool WillCollide(FSteeringOutput InputSteering);
-
-    bool DoDrawDebug{ false };
-
-    FObstacleCollisionResult GetFoundedCollision() const { return FoundedCollision; }
-
-private:
-
-    FObstacleCollisionResult FoundedCollision;
-
-    UFUNCTION()
+    UFUNCTION(BlueprintCallable, Category = "ObstacleAvoidance|Debug")
     void DrawDebug();
 };

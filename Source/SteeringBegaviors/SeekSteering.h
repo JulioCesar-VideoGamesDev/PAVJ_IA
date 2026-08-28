@@ -23,8 +23,8 @@ public:
 
     FVector TargetPosition{ FVector::ZeroVector };
 
-    FVector MaxVelocityPosible = FVector::ZeroVector;
-    FVector LastAcceleration = FVector::ZeroVector;
+    /*FVector MaxVelocityPosible = FVector::ZeroVector;
+    FVector LastAcceleration = FVector::ZeroVector;*/
 
     bool DoDrawDebug{ false };
 

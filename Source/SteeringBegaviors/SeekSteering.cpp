@@ -22,7 +22,7 @@ void USeekSteering::GetSteering(FSteeringOutput& SteeringOutput)
         Direction.Normalize();
     }
 
-    MaxVelocityPosible = Direction * AICharacter->GetParams().max_speed; // Max Velocity posible
+    FVector MaxVelocityPosible = Direction * AICharacter->GetParams().max_speed; // Max Velocity posible
 
     // Subtract CurrentVelocity to MaxVelocityPosible to get the LinearVelocity of the Steering.
     Result.Linear = MaxVelocityPosible - AICharacter->GetAICharacterCurrentVelocity();
@@ -34,7 +34,7 @@ void USeekSteering::GetSteering(FSteeringOutput& SteeringOutput)
             AICharacter->GetParams().max_acceleration;
     }
 
-    LastAcceleration = Result.Linear;
+    //LastAcceleration = Result.Linear;
 
     Result.Angular = 0.0f;
 

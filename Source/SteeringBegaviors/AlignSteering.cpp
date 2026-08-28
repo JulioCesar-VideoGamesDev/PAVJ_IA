@@ -25,9 +25,9 @@ void UAlignSteering::GetSteering(FSteeringOutput& SteeringOutput)
     if (FMath::Abs(AngularDifference) < KINDA_SMALL_NUMBER)
     {
         Result.Linear = FVector::ZeroVector;
-        Result.Angular = 0.f;
-        SteeringOutput = Result;
+        Result.Angular = AICharacter->GetAICharacterCurrentAngularVelocity() * -1;
 
+        SteeringOutput = Result;
         return;
     }
 

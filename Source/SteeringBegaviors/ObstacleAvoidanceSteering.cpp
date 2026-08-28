@@ -3,22 +3,27 @@
 
 #include "DrawDebugHelpers.h"
 
-void UObstacleAvoidanceSteering::FindCollisionAndGetSteering(const FSteeringOutput& InputSteering, FSteeringOutput& SteeringOutput)
+FSteeringOutput UObstacleAvoidanceSteering::FindCollisionAndGetSteering(const FSteeringOutput& InputSteering)
 {
-    SteeringOutput = FSteeringOutput();
+    FSteeringOutput Result = FSteeringOutput();
 
     if (!::IsValid(AICharacter))
     {
         UE_LOG(LogTemp, Error, TEXT("AICHARACTER ISN'T VALID"));
 
-        return;
+        return Result;
     }
 
     DrawDebug();
 
-    FoundedCollision = FindCollision(InputSteering);
+    FoundCollision = FindCollision(InputSteering);
+    
+    if (FoundCollision.bWillCollide)
+    {
+        GetSteering(Result);
+    }
 
-    if (FoundedCollision.bWillCollide) GetSteering(SteeringOutput);
+    return Result;
 }
 
 FObstacleCollisionResult UObstacleAvoidanceSteering::FindCollision(const FSteeringOutput& InputSteering)
@@ -113,14 +118,14 @@ void UObstacleAvoidanceSteering::GetSteering(FSteeringOutput& SteeringOutput)
         return;
     }
 
-    if (!FoundedCollision.bWillCollide ||
-        !ObstaclesArray.IsValidIndex(FoundedCollision.ObstacleIndex))
+    if (!FoundCollision.bWillCollide ||
+        !ObstaclesArray.IsValidIndex(FoundCollision.ObstacleIndex))
     {
         return;
     }
 
     const FObstacleAttr& Obstacle =
-        ObstaclesArray[FoundedCollision.ObstacleIndex];
+        ObstaclesArray[FoundCollision.ObstacleIndex];
 
     const FVector CurrentPosition =
         AICharacter->GetActorLocation();
@@ -138,7 +143,7 @@ void UObstacleAvoidanceSteering::GetSteering(FSteeringOutput& SteeringOutput)
 
     // Vector from the obstacle towards the closest point of our predicted trajectory.
     
-    //const FVector Difference = FoundedCollision.Difference.GetSafeNormal();
+    //const FVector Difference = FoundCollision.Difference.GetSafeNormal();
 
     const FVector ToObstacle =
         (Obstacle.Position - CurrentPosition).GetSafeNormal();
@@ -182,13 +187,13 @@ void UObstacleAvoidanceSteering::GetSteering(FSteeringOutput& SteeringOutput)
 
     const float Penetration =
         CollisionRadius -
-        FoundedCollision.Distance;
+        FoundCollision.Distance;
 
     // More penetration = stronger avoidance.
 
     float AccelerationMagnitude =
-        AICharacter->GetParams().max_acceleration;
-        //Penetration * AvoidanceStrength;
+        //AICharacter->GetParams().max_acceleration;
+        Penetration * AvoidanceStrength;
 
     AccelerationMagnitude =
         FMath::Clamp(
@@ -217,7 +222,7 @@ void UObstacleAvoidanceSteering::GetSteering(FSteeringOutput& SteeringOutput)
     DrawDebugLine(
         GetWorld(),
         CurrentPosition,
-        FoundedCollision.ClosestPoint,
+        FoundCollision.ClosestPoint,
         FColor::Yellow,
         false,
         0.f,
