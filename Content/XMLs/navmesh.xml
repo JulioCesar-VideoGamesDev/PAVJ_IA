@@ -1,0 +1,154 @@
+<navmesh>
+    <polygons>
+        <!-- ============================================ -->
+        <!-- POLÍGONO 0: Habitación principal (grande)    -->
+        <!-- ============================================ -->
+        <polygon>
+            <point x="-500" y="-400"/>
+            <point x="500" y="-400"/>
+            <point x="500" y="400"/>
+            <point x="-500" y="400"/>
+        </polygon>
+
+        <!-- ============================================ -->
+        <!-- POLÍGONO 1: Pasillo superior                  -->
+        <!-- ============================================ -->
+        <polygon>
+            <point x="-200" y="400"/>
+			<point x="200" y="400"/>
+			<point x="200" y="550"/>
+            <point x="-200" y="550"/>
+        </polygon>
+
+        <!-- ============================================ -->
+        <!-- POLÍGONO 2: Habitación derecha superior       -->
+        <!-- ============================================ -->
+        <polygon>
+            <point x="200" y="400"/>
+            <point x="200" y="550"/>
+            <point x="450" y="550"/>
+            <point x="450" y="300"/>
+            <point x="350" y="300"/>
+            <point x="350" y="400"/>
+        </polygon>
+
+        <!-- ============================================ -->
+        <!-- POLÍGONO 3: Pasillo inferior                  -->
+        <!-- ============================================ -->
+        <polygon>
+            <point x="-200" y="-400"/>
+            <point x="-200" y="-550"/>
+            <point x="200" y="-550"/>
+            <point x="200" y="-400"/>
+        </polygon>
+
+        <!-- ============================================ -->
+        <!-- POLÍGONO 4: Habitación izquierda inferior     -->
+        <!-- ============================================ -->
+        <polygon>
+            <point x="-450" y="-300"/>
+            <point x="-350" y="-300"/>
+            <point x="-350" y="-400"/>
+            <point x="-450" y="-400"/>
+        </polygon>
+
+        <!-- ============================================ -->
+        <!-- POLÍGONO 5: Habitación derecha inferior       -->
+        <!-- ============================================ -->
+        <polygon>
+            <point x="250" y="-300"/>
+            <point x="350" y="-300"/>
+            <point x="350" y="-400"/>
+            <point x="450" y="-400"/>
+            <point x="450" y="-550"/>
+            <point x="250" y="-550"/>
+        </polygon>
+
+        <!-- ============================================ -->
+        <!-- POLÍGONO 6: Área central con obstáculo        -->
+        <!-- (polígono con forma de L para simular        -->
+        <!--  un obstáculo en el centro)                   -->
+        <!-- ============================================ -->
+        <polygon>
+            <point x="-100" y="-100"/>
+            <point x="-100" y="100"/>
+            <point x="100" y="100"/>
+            <point x="100" y="-50"/>
+            <point x="50" y="-50"/>
+            <point x="50" y="-100"/>
+        </polygon>
+
+        <!-- ============================================ -->
+        <!-- POLÍGONO 7: Pasillo superior izquierdo        -->
+        <!-- ============================================ -->
+        <polygon>
+            <point x="-500" y="400"/>
+            <point x="-500" y="550"/>
+            <point x="-350" y="550"/>
+            <point x="-350" y="400"/>
+        </polygon>
+
+        <!-- ============================================ -->
+        <!-- POLÍGONO 8: Habitación pequeña arriba         -->
+        <!-- ============================================ -->
+        <polygon>
+            <point x="300" y="550"/>
+            <point x="300" y="700"/>
+            <point x="450" y="700"/>
+            <point x="450" y="550"/>
+        </polygon>
+    </polygons>
+    <links>
+        <!-- ============================================ -->
+        <!-- CONEXIONES ENTRE POLÍGONOS                    -->
+        <!-- ============================================ -->
+
+        <!-- Link 0: Polígono 0 ↔ Polígono 1 (pasillo superior) -->
+        <link>
+            <start polygon="0" edgestart="2" edgeend="3"/>
+            <end polygon="1" edgestart="0" edgeend="3"/>
+        </link>
+
+        <!-- Link 1: Polígono 1 ↔ Polígono 2 (habitación derecha superior) -->
+        <link>
+            <start polygon="1" edgestart="2" edgeend="3"/>
+            <end polygon="2" edgestart="1" edgeend="4"/>
+        </link>
+
+        <!-- Link 2: Polígono 0 ↔ Polígono 3 (pasillo inferior) -->
+        <link>
+            <start polygon="0" edgestart="0" edgeend="1"/>
+            <end polygon="3" edgestart="0" edgeend="3"/>
+        </link>
+
+        <!-- Link 3: Polígono 3 ↔ Polígono 4 (habitación izquierda inferior) -->
+        <link>
+            <start polygon="3" edgestart="0" edgeend="1"/>
+            <end polygon="4" edgestart="3" edgeend="2"/>
+        </link>
+
+        <!-- Link 4: Polígono 3 ↔ Polígono 5 (habitación derecha inferior) -->
+        <link>
+            <start polygon="3" edgestart="2" edgeend="3"/>
+            <end polygon="5" edgestart="1" edgeend="0"/>
+        </link>
+
+        <!-- Link 5: Polígono 0 ↔ Polígono 6 (área central con obstáculo) -->
+        <link>
+            <start polygon="0" edgestart="0" edgeend="3"/>
+            <end polygon="6" edgestart="3" edgeend="4"/>
+        </link>
+
+        <!-- Link 6: Polígono 0 ↔ Polígono 7 (pasillo superior izquierdo) -->
+        <link>
+            <start polygon="0" edgestart="2" edgeend="3"/>
+            <end polygon="7" edgestart="0" edgeend="1"/>
+        </link>
+
+        <!-- Link 7: Polígono 2 ↔ Polígono 8 (habitación pequeña arriba) -->
+        <link>
+            <start polygon="2" edgestart="2" edgeend="3"/>
+            <end polygon="8" edgestart="1" edgeend="0"/>
+        </link>
+    </links>
+</navmesh>

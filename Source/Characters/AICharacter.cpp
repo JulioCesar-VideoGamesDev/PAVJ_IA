@@ -18,7 +18,8 @@
 #include "SteeringBegaviors/ObstacleAvoidanceSteering.h"
 
 // PathFinding
-#include "PathFinding/PathFinder.h"
+#include "PathFinding/PathFinder_Grid.h"
+#include "PathFinding/PathFinder_NavMesh.h"
 
 // Sets default values
 AAICharacter::AAICharacter()
@@ -31,7 +32,7 @@ AAICharacter::AAICharacter()
 void AAICharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	//----------------------------------------------------
 
 	ReadParams("XMLs/params.xml", m_params);
@@ -43,7 +44,7 @@ void AAICharacter::BeginPlay()
 	//----------------------------------------------------
 
 	ReadPaths("XMLs/paths.xml", m_paths);
-	
+
 	// Set PathPoints.
 	PathPoints = m_paths.GetPathPoints();
 
@@ -52,26 +53,51 @@ void AAICharacter::BeginPlay()
 	ReadObstacles("XMLs/obstacles.xml", ObstaclesArray);
 
 	//----------------------------------------------------
-	
-	if (bEnablePathfinding_Grid)
+
+	if (bEnablePathfinding)
 	{
-		PathFinder = NewObject<UPathFinder>(this);
-
-		if (::IsValid(PathFinder))
+		switch (PathFinderVersion)
 		{
-			PathFinder->World = GetWorld();
-			PathFinder->CellSize = 100.f;
-			PathFinder->GridOrigin = FVector(-500, 0, -500);  // Origin in XZ  axis.
+		case PathFindingVersion::Grid:
+			PathFinder_Grid = NewObject<UPathFinder_Grid>(this);
 
-			if (!PathFinder->LoadGridFromFile("TXTs/grid_map.txt", "TXTs/grid_cost_config.txt"))
+			if (::IsValid(PathFinder_Grid))
 			{
-				// If it fails we create the default grid.
-				//PathFinder->SetupDefaultGrid(10, 10, 100.0f);
-				UE_LOG(LogTemp, Warning, TEXT("Using default grid."));
+				PathFinder_Grid->World = GetWorld();
+				PathFinder_Grid->CellSize = 100.f;
+				PathFinder_Grid->GridOrigin = GridOrigin;  // Origin in XZ  axis.
+
+				if (!PathFinder_Grid->LoadGridFromFile("TXTs/grid_map.txt", "TXTs/grid_cost_config.txt"))
+				{
+					// If it fails we create the default grid.
+					PathFinder_Grid->SetupDefaultGrid(10, 10, 100.0f);
+					UE_LOG(LogTemp, Warning, TEXT("Using default grid."));
+				}
 			}
+
+			break;
+		case PathFindingVersion::NavMesh:
+			PathFinder_NavMesh = NewObject<UPathFinder_NavMesh>(this);
+
+			if (::IsValid(PathFinder_NavMesh))
+			{
+				PathFinder_NavMesh->World = GetWorld();
+				PathFinder_NavMesh->HeightOffset = 1.f;  // Altura del suelo
+
+				if (!PathFinder_NavMesh->LoadNavMeshFromFile(NavMeshPath))
+				{
+					// If it fails we create the default grid.
+					//PathFinder_NavMesh->SetupDefaultGrid(10, 10, 100.0f);
+					UE_LOG(LogTemp, Warning, TEXT("Using default grid."));
+				}
+			}
+
+			break;
+		default:
+			break;
 		}
 	}
-	
+
 	//----------------------------------------------------
 
 	// INITIALIZE STEERINGS
@@ -164,10 +190,15 @@ void AAICharacter::Tick(float DeltaTime)
 
 	// SET THE GRID
 
-	if (PathFinder)
+	if (::IsValid(PathFinder_Grid))
 	{
-		PathFinder->DrawGrid(true);
-		PathFinder->DrawPath(PathFinder->GetLastPath());
+		PathFinder_Grid->DrawGrid(true);
+		PathFinder_Grid->DrawPath(PathFinder_Grid->GetLastPath());
+	}
+
+	if (::IsValid(PathFinder_NavMesh))
+	{
+		PathFinder_NavMesh->DrawPath(PathFinder_NavMesh->GetLastPath());
 	}
 
 	// GET THE STEERING
@@ -189,7 +220,7 @@ void AAICharacter::Tick(float DeltaTime)
 	if (::IsValid(ObstacleAvoidanceSteering))
 	{
 		FSteeringOutput ObstacleAvoidanceSteeringResult = ObstacleAvoidanceSteering->FindCollisionAndGetSteering(Steering);
-		
+
 		if (ObstacleAvoidanceSteering->GetFoundCollision().bWillCollide)
 		{
 			FSteeringOutput CurrentSteering = Steering;
@@ -253,20 +284,33 @@ void AAICharacter::OnClickedLeft(const FVector& mousePosition)
 {
 	if (bEnableLeftClickTP) SetActorLocation(mousePosition);
 
-	if (!::IsValid(PathFinder))
+	if (::IsValid(PathFinder_Grid))
 	{
-		return;
+		PathFinder_Grid->CurrentStart = PathFinder_Grid->GetCellAtLocation(mousePosition);
+
+		// If we already have an end, we calculate the path.
+		if (PathFinder_Grid->CurrentEnd)
+		{
+			TArray<FVector> Path = PathFinder_Grid->FindPath(PathFinder_Grid->CurrentStart->WorldLocation, PathFinder_Grid->CurrentEnd->WorldLocation);
+
+			if (::IsValid(PathFollowingSteering))
+			{
+				PathFollowingSteering->ResetPathFollowingWithPath(Path);
+			}
+		}
 	}
 
-	PathFinder->CurrentStart = PathFinder->GetCellAtLocation(mousePosition);
-
-	// If we already have an end, we calculate the path.
-	if (PathFinder->CurrentEnd)
+	if (::IsValid(PathFinder_NavMesh))
 	{
-		TArray<FVector> Path = PathFinder->FindPath(PathFinder->CurrentStart->WorldLocation, PathFinder->CurrentEnd->WorldLocation);
+		StartLocation = mousePosition;
 
-		if (::IsValid(PathFollowingSteering))
+		if (!bHaveEndLocation) return;
+
+		TArray<FVector> Path = PathFinder_NavMesh->FindPath(StartLocation, EndLocation);
+
+		if (Path.Num() > 0)
 		{
+			// Enviar al sistema de PathFollowing
 			PathFollowingSteering->ResetPathFollowingWithPath(Path);
 		}
 	}
@@ -278,18 +322,34 @@ void AAICharacter::OnClickedRight(const FVector& mousePosition)
 	if (::IsValid(SeekSteering))SeekSteering->TargetPosition = mousePosition;
 	if (::IsValid(ArriveSteering))ArriveSteering->TargetPosition = mousePosition;
 
-	if (!::IsValid(PathFinder)) return;
-
-	PathFinder->CurrentEnd = PathFinder->GetCellAtLocation(mousePosition);
-
-	PathFinder->CurrentStart = PathFinder->GetCellAtLocation(GetActorLocation());
-
-	if (PathFinder->CurrentStart)
+	if (::IsValid(PathFinder_Grid))
 	{
-		TArray<FVector> Path = PathFinder->FindPath(PathFinder->CurrentStart->WorldLocation, PathFinder->CurrentEnd->WorldLocation);
+		PathFinder_Grid->CurrentEnd = PathFinder_Grid->GetCellAtLocation(mousePosition);
 
-		if (::IsValid(PathFollowingSteering))
+		PathFinder_Grid->CurrentStart = PathFinder_Grid->GetCellAtLocation(GetActorLocation());
+
+		if (PathFinder_Grid->CurrentStart)
 		{
+			TArray<FVector> Path = PathFinder_Grid->FindPath(PathFinder_Grid->CurrentStart->WorldLocation, PathFinder_Grid->CurrentEnd->WorldLocation);
+
+			if (::IsValid(PathFollowingSteering))
+			{
+				PathFollowingSteering->ResetPathFollowingWithPath(Path);
+			}
+		}
+	}
+
+	if (::IsValid(PathFinder_NavMesh))
+	{
+		StartLocation = GetActorLocation();
+		EndLocation = mousePosition;
+		bHaveEndLocation = true;
+
+		TArray<FVector> Path = PathFinder_NavMesh->FindPath(StartLocation, EndLocation);
+
+		if (Path.Num() > 0)
+		{
+			// Enviar al sistema de PathFollowing
 			PathFollowingSteering->ResetPathFollowingWithPath(Path);
 		}
 	}
@@ -319,10 +379,23 @@ void AAICharacter::DrawDebug()
 
 	//FVector dir(cos(FMath::DegreesToRadians(m_params.targetRotation)), 0.0f, sin(FMath::DegreesToRadians(m_params.targetRotation)));
 	//SetArrow(this, TEXT("targetRotation"), dir, 80.0f);
+	if (::IsValid(PathFinder_NavMesh))
+	{
+		TArray<TArray<FVector>> Polygons = PathFinder_NavMesh->GetNavMeshPolygons();
 
+		if (Polygons.Num() > 1)
+		{
+			TArray<TArray<FVector>> PolygonsTest = {
+				{ FVector(0.f, 0.f, 0.f), FVector(100.f, 0.f, 0.f), FVector(100.f, 0.f, 100.0f), FVector(0.f, 0.f, 200.0f) },
+				{ FVector(0.f, 0.f, 0.f), FVector(100.f, 0.f, 0.f), FVector(100.f, 0.f, 100.0f), FVector(0.f, 0.f, 200.0f) }
+			};
+			SetPolygons(this, TEXT("navmesh"), TEXT("mesh"), PolygonsTest, NavmeshMaterial);
+		}
+	}
 	/*TArray<TArray<FVector>> Polygons = {
-		{ FVector(0.f, 0.f, 0.f), FVector(100.f, 0.f, 0.f), FVector(100.f, 0.f, 100.0f), FVector(0.f, 0.f, 100.0f) },
-		{ FVector(100.f, 0.f, 0.f), FVector(200.f, 0.f, 0.f), FVector(200.f, 0.f, 100.0f) }
+		{ FVector(0.f, 0.f, 0.f), FVector(100.f, 0.f, 0.f), FVector(100.f, 0.f, 100.0f), FVector(0.f, 0.f, 200.0f) },
+		{ FVector(100.f, 0.f, 0.f), FVector(200.f, 0.f, 0.f), FVector(200.f, 0.f, 100.0f) },
+		{ FVector(500.f, 0.f, 0.f), FVector(700.f, 0.f, 0.f), FVector(700.f, 0.f, 500.0f) }
 	};
 	SetPolygons(this, TEXT("navmesh"), TEXT("mesh"), Polygons, NavmeshMaterial);*/
 
@@ -335,24 +408,4 @@ void AAICharacter::DrawDebug()
 		false,           // Persistent
 		0.f              // Duration this frame
 	);
-
-	//DrawDebugSphere(
-	//	GetWorld(),
-	//	ClosestPoint,
-	//	40.f,
-	//	16,              // Segments
-	//	FColor::Green,
-	//	false,           // Persistent
-	//	0.f              // Duration this frame
-	//);
-
-	//DrawDebugSphere(
-	//	GetWorld(),
-	//	SeekPoint,
-	//	40.f,
-	//	16,              // Segments
-	//	FColor::Yellow,
-	//	false,           // Persistent
-	//	0.f              // Duration this frame
-	//);
 }

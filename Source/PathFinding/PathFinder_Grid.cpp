@@ -1,17 +1,17 @@
-#include "PathFinder.h"
+#include "PathFinder_Grid.h"
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 
-UPathFinder::UPathFinder()
+UPathFinder_Grid::UPathFinder_Grid()
 {
     // Initialize map with default values
     CostMap.Add('.', 1.f);
     CostMap.Add('#', 0.f);  // Obstacle
 }
 
-TArray<FVector> UPathFinder::FindPath(FVector StartLocation, FVector EndLocation)
+TArray<FVector> UPathFinder_Grid::FindPath(FVector StartLocation, FVector EndLocation)
 {
     LastPath.Empty();
 
@@ -49,7 +49,7 @@ TArray<FVector> UPathFinder::FindPath(FVector StartLocation, FVector EndLocation
 
 
 // Implementation of the A* algorithm.
-TArray<FVector> UPathFinder::AStar(FGridCell* StartCell, FGridCell* EndCell)
+TArray<FVector> UPathFinder_Grid::AStar(FGridCell* StartCell, FGridCell* EndCell)
 {
     // Reset ALL nodes
     for (FGridCell& Cell : Grid)
@@ -137,7 +137,7 @@ TArray<FVector> UPathFinder::AStar(FGridCell* StartCell, FGridCell* EndCell)
 }
 
 // Reconstruct the path from the EndCell to the StartCell.
-void UPathFinder::ReconstructPath(FGridCell* EndCell, TArray<FVector>& OutPath)
+void UPathFinder_Grid::ReconstructPath(FGridCell* EndCell, TArray<FVector>& OutPath)
 {
     OutPath.Empty();
 
@@ -159,14 +159,14 @@ void UPathFinder::ReconstructPath(FGridCell* EndCell, TArray<FVector>& OutPath)
 }
 
 // Calculates the heuristic Manhattan Distance (only 4 directions).
-float UPathFinder::Heuristic(FGridCell* A, FGridCell* B)
+float UPathFinder_Grid::Heuristic(FGridCell* A, FGridCell* B)
 {
     return FMath::Abs(A->GridPosition.X - B->GridPosition.X) +
         FMath::Abs(A->GridPosition.Y - B->GridPosition.Y);
 }
 
 // GetNeighbors in the 4 directions.
-TArray<FGridCell*> UPathFinder::GetNeighbors(FGridCell* Cell)
+TArray<FGridCell*> UPathFinder_Grid::GetNeighbors(FGridCell* Cell)
 {
     TArray<FGridCell*> Neighbors;
 
@@ -193,7 +193,7 @@ TArray<FGridCell*> UPathFinder::GetNeighbors(FGridCell* Cell)
 }
 
 
-bool UPathFinder::LoadGridFromFile(FString FilePath, FString CostConfigPath)
+bool UPathFinder_Grid::LoadGridFromFile(FString FilePath, FString CostConfigPath)
 {
     FString FullPath = FPaths::ProjectContentDir() / FilePath;
     FString FileContent;
@@ -290,7 +290,7 @@ bool UPathFinder::LoadGridFromFile(FString FilePath, FString CostConfigPath)
     return true;
 }
 
-void UPathFinder::SetupDefaultGrid(int32 GridSizeX, int32 GridSizeY, float InCellSize)
+void UPathFinder_Grid::SetupDefaultGrid(int32 GridSizeX, int32 GridSizeY, float InCellSize)
 {
     CellSize = InCellSize;
     GridSize = FIntPoint(GridSizeX, GridSizeY);
@@ -315,7 +315,7 @@ void UPathFinder::SetupDefaultGrid(int32 GridSizeX, int32 GridSizeY, float InCel
     UE_LOG(LogTemp, Log, TEXT("Pathfinder: Created default Grid - %dx%d."), GridSizeX, GridSizeY);
 }
 
-FGridCell* UPathFinder::GetCellAtLocation(FVector Location)
+FGridCell* UPathFinder_Grid::GetCellAtLocation(FVector Location)
 {
     FVector LocalPos = Location - GridOrigin;
     int32 X = FMath::RoundToInt(LocalPos.X / CellSize);
@@ -324,7 +324,7 @@ FGridCell* UPathFinder::GetCellAtLocation(FVector Location)
     return GetCellAtGrid(FIntPoint(X, Y));
 }
 
-FGridCell* UPathFinder::GetCellAtGrid(FIntPoint GridPos)
+FGridCell* UPathFinder_Grid::GetCellAtGrid(FIntPoint GridPos)
 {
     if (GridPos.X < 0 || GridPos.X >= GridSize.X ||
         GridPos.Y < 0 || GridPos.Y >= GridSize.Y)
@@ -336,14 +336,14 @@ FGridCell* UPathFinder::GetCellAtGrid(FIntPoint GridPos)
     return &Grid[Index];
 }
 
-void UPathFinder::DrawGrid(bool bDrawCosts)
+void UPathFinder_Grid::DrawGrid(bool bDrawCosts)
 {
     if (!World) return;
 
     for (const FGridCell& Cell : Grid)
     {
         FVector Center = Cell.WorldLocation;
-        
+
         // The thin axis is the Y since that is my vertical Axis.
         FVector Extents = FVector(CellSize / 2 - 5, 2.f, CellSize / 2 - 5);
 
@@ -390,7 +390,7 @@ void UPathFinder::DrawGrid(bool bDrawCosts)
     }
 }
 
-void UPathFinder::DrawPath(const TArray<FVector>& Path, FColor Color)
+void UPathFinder_Grid::DrawPath(const TArray<FVector>& Path, FColor Color)
 {
     if (!World || Path.Num() < 2) return;
 

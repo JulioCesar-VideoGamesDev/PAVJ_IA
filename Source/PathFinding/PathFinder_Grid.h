@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "PathFinder.generated.h"
+#include "PathFinder_Grid.generated.h"
 
 // Struct to represent a tile in the Grid
 USTRUCT(BlueprintType)
@@ -50,12 +50,12 @@ struct FGridCell
 };
 
 UCLASS(BlueprintType)
-class MPV_PRACTICAS_API UPathFinder : public UObject
+class MPV_PRACTICAS_API UPathFinder_Grid : public UObject
 {
     GENERATED_BODY()
 
 public:
-    UPathFinder();
+    UPathFinder_Grid();
 
     // Finds a path between two points.
     UFUNCTION(BlueprintCallable, Category = "Pathfinding")

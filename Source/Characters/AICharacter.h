@@ -25,7 +25,8 @@ class UPathFollowingSteering;
 class UObstacleAvoidanceSteering;
 
 // PathFinding
-class UPathFinder;
+class UPathFinder_Grid;
+class UPathFinder_NavMesh;
 
 UENUM(BlueprintType)
 enum class SteeringLinearVelocity : uint8
@@ -40,6 +41,13 @@ enum class SteeringAngularVelocity : uint8
 {
 	Align UMETA(DisplayName = "Align"),
 	AlignToMovement UMETA(DisplayName = "AlignToMovement")
+};
+
+UENUM(BlueprintType)
+enum class PathFindingVersion : uint8
+{
+	Grid UMETA(DisplayName = "Grid"),
+	NavMesh UMETA(DisplayName = "NavMesh")
 };
 
 UCLASS()
@@ -81,6 +89,13 @@ protected:
 	// Enum to control which Steering of AngularVelocity are we using.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steerings|State")
 	SteeringAngularVelocity StateAngularVel{ SteeringAngularVelocity::AlignToMovement };
+	
+	// Enum to control which PathFinder are we using.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steerings|State")
+	PathFindingVersion PathFinderVersion{ PathFindingVersion::Grid };
+
+	UPROPERTY(EditDefaultsOnly, Category = "Steerings|Controllers")
+	bool bEnablePathfinding{ false };
 
 	// Enables the SetActorLocation on the leftclick callback.
 	UPROPERTY(EditDefaultsOnly, Category = "Steerings|Controllers")
@@ -113,10 +128,20 @@ protected:
 	bool bEnableObstacleAvoidance{ false };
 
 	UPROPERTY(BlueprintReadOnly, Category = "PathFinder")
-	TObjectPtr<UPathFinder> PathFinder;
+	TObjectPtr<UPathFinder_Grid> PathFinder_Grid;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Steerings|PathFinder")
+	FVector GridOrigin { FVector::ZeroVector };
 
-	UPROPERTY(EditDefaultsOnly, Category = "Steerings|Controllers")
-	bool bEnablePathfinding_Grid{ false };
+	UPROPERTY(BlueprintReadOnly, Category = "PathFinder")
+	TObjectPtr<UPathFinder_NavMesh> PathFinder_NavMesh;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Steerings|PathFinder")
+	FString NavMeshPath{ "" };
+
+	FVector StartLocation{ FVector::ZeroVector };
+	FVector EndLocation{ FVector::ZeroVector };
+	bool bHaveEndLocation{ false };
 
 protected:
 
