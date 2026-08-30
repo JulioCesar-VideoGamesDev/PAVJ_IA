@@ -76,7 +76,7 @@ void UPathFollowingSteering::GetSteering(FSteeringOutput& SteeringOutput)
         ObstacleAvoidanceDelegate = NewObject<UObstacleAvoidanceSteering>(this);
         ObstacleAvoidanceDelegate->AICharacter = AICharacter;
         ObstacleAvoidanceDelegate->ObstaclesArray = AICharacter->GetObstaclesArray();
-        ObstacleAvoidanceDelegate->AvoidanceStrength = AvoidanceStrength;
+        ObstacleAvoidanceDelegate->AvoidanceStrength = ObstacleAvoidanceStrength;
     }
 
     FSteeringOutput ResultObstacleAvoidance = ObstacleAvoidanceDelegate->FindCollisionAndGetSteering(ResultPathFollowing);

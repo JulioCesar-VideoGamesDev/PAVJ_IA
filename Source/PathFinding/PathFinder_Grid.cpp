@@ -9,6 +9,13 @@ UPathFinder_Grid::UPathFinder_Grid()
     // Initialize map with default values
     CostMap.Add('.', 1.f);
     CostMap.Add('#', 0.f);  // Obstacle
+
+    if (!LoadGridFromFile("TXTs/grid_map.txt", "TXTs/grid_cost_config.txt"))
+    {
+        // If it fails we create the default grid.
+        SetupDefaultGrid(10, 10, 100.0f);
+        UE_LOG(LogTemp, Warning, TEXT("Using default grid."));
+    }
 }
 
 TArray<FVector> UPathFinder_Grid::FindPath(FVector StartLocation, FVector EndLocation)
@@ -235,17 +242,22 @@ bool UPathFinder_Grid::LoadGridFromFile(FString FilePath, FString CostConfigPath
     TArray<FString> GridLines;
     FileContent.ParseIntoArrayLines(GridLines); // Each item of the array is a string with one line of the map.
 
-    GridSize.X = GridLines[0].Len(); // Length of the first line.
-    GridSize.Y = GridLines.Num(); // Number o flines.
+    GridSize_CellCount.X = GridLines[0].Len(); // Length of the first line.
+    GridSize_CellCount.Y = GridLines.Num(); // Number o flines.
+
+    GridSize = FVector(
+        GridSize_CellCount.X * CellSize - GridOrigin.X,
+        GridOrigin.Y,
+        GridSize_CellCount.Y * CellSize - GridOrigin.Z);
 
     Grid.Empty();
-    Grid.Reserve(GridSize.X * GridSize.Y); // Reserve the memory for the Grid.
+    Grid.Reserve(GridSize_CellCount.X * GridSize_CellCount.Y); // Reserve the memory for the Grid.
 
-    for (int32 Y = 0; Y < GridSize.Y; ++Y)
+    for (int32 Y = 0; Y < GridSize_CellCount.Y; ++Y)
     {
-        int32 InvertedY = GridSize.Y - 1 - Y;
+        int32 InvertedY = GridSize_CellCount.Y - 1 - Y;
 
-        for (int32 X = 0; X < GridSize.X; ++X)
+        for (int32 X = 0; X < GridSize_CellCount.X; ++X)
         {
             char Char = GridLines[InvertedY][X];
             float Cost = 1.f;
@@ -285,23 +297,23 @@ bool UPathFinder_Grid::LoadGridFromFile(FString FilePath, FString CostConfigPath
     }
 
     UE_LOG(LogTemp, Log, TEXT("Pathfinder: Grid loaded - %dx%d, %d walkable cells."),
-        GridSize.X, GridSize.Y, WalkableCount);
+        GridSize_CellCount.X, GridSize_CellCount.Y, WalkableCount);
 
     return true;
 }
 
-void UPathFinder_Grid::SetupDefaultGrid(int32 GridSizeX, int32 GridSizeY, float InCellSize)
+void UPathFinder_Grid::SetupDefaultGrid(int32 GridSize_CellCountX, int32 GridSize_CellCountY, float InCellSize)
 {
     CellSize = InCellSize;
-    GridSize = FIntPoint(GridSizeX, GridSizeY);
-    GridOrigin = FVector(-GridSizeX * CellSize / 2, 0, -GridSizeY * CellSize / 2);
+    GridSize_CellCount = FIntPoint(GridSize_CellCountX, GridSize_CellCountY);
+    GridOrigin = FVector(-GridSize_CellCountX * CellSize / 2, 0, -GridSize_CellCountY * CellSize / 2);
 
     Grid.Empty();
-    Grid.Reserve(GridSizeX * GridSizeY);
+    Grid.Reserve(GridSize_CellCountX * GridSize_CellCountY);
 
-    for (int32 Y = 0; Y < GridSizeY; ++Y)
+    for (int32 Y = 0; Y < GridSize_CellCountY; ++Y)
     {
-        for (int32 X = 0; X < GridSizeX; ++X)
+        for (int32 X = 0; X < GridSize_CellCountX; ++X)
         {
             // Some obstacles for tests.
             bool bIsObstacle = (X == 3 && Y > 1 && Y < 8) || (X == 5 && Y == 5);
@@ -312,7 +324,7 @@ void UPathFinder_Grid::SetupDefaultGrid(int32 GridSizeX, int32 GridSizeY, float 
         }
     }
 
-    UE_LOG(LogTemp, Log, TEXT("Pathfinder: Created default Grid - %dx%d."), GridSizeX, GridSizeY);
+    UE_LOG(LogTemp, Log, TEXT("Pathfinder: Created default Grid - %dx%d."), GridSize_CellCountX, GridSize_CellCountY);
 }
 
 FGridCell* UPathFinder_Grid::GetCellAtLocation(FVector Location)
@@ -326,19 +338,19 @@ FGridCell* UPathFinder_Grid::GetCellAtLocation(FVector Location)
 
 FGridCell* UPathFinder_Grid::GetCellAtGrid(FIntPoint GridPos)
 {
-    if (GridPos.X < 0 || GridPos.X >= GridSize.X ||
-        GridPos.Y < 0 || GridPos.Y >= GridSize.Y)
+    if (GridPos.X < 0 || GridPos.X >= GridSize_CellCount.X ||
+        GridPos.Y < 0 || GridPos.Y >= GridSize_CellCount.Y)
     {
         return nullptr;
     }
 
-    int32 Index = GridPos.Y * GridSize.X + GridPos.X;
+    int32 Index = GridPos.Y * GridSize_CellCount.X + GridPos.X;
     return &Grid[Index];
 }
 
 void UPathFinder_Grid::DrawGrid(bool bDrawCosts)
 {
-    if (!World) return;
+    if (!::IsValid(World)) World = GetWorld();
 
     for (const FGridCell& Cell : Grid)
     {
@@ -392,7 +404,9 @@ void UPathFinder_Grid::DrawGrid(bool bDrawCosts)
 
 void UPathFinder_Grid::DrawPath(const TArray<FVector>& Path, FColor Color)
 {
-    if (!World || Path.Num() < 2) return;
+    if (Path.Num() < 2) return;
+
+    if (!::IsValid(World)) World = GetWorld();
 
     // Draw lines of the path.
     for (int32 i = 0; i < Path.Num() - 1; ++i)

@@ -61,30 +61,11 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Pathfinding")
     TArray<FVector> FindPath(FVector StartLocation, FVector EndLocation);
 
-    // Loads the grid from a file.
-    UFUNCTION(BlueprintCallable, Category = "Pathfinding")
-    bool LoadGridFromFile(FString FilePath, FString CostConfigPath = "");
-
-    UFUNCTION(BlueprintCallable, Category = "Pathfinding")
-    void SetupDefaultGrid(int32 GridSizeX = 10, int32 GridSizeY = 10, float CellSize = 100.0f);
-
-    UFUNCTION(BlueprintCallable, Category = "Pathfinding")
-    void DrawGrid(bool bDrawCosts = true);
-
-    UFUNCTION(BlueprintCallable, Category = "Pathfinding")
-    void DrawPath(const TArray<FVector>& Path, FColor Color = FColor::Yellow);
-
     UFUNCTION(BlueprintCallable, Category = "Pathfinding")
     TArray<FVector> GetLastPath() const { return LastPath; }
 
     UFUNCTION(BlueprintCallable, Category = "Pathfinding")
-    FIntPoint GetGridSize() const { return GridSize; }
-
-    // Returns a cell based on a world location.
-    FGridCell* GetCellAtLocation(FVector Location);
-
-    // Returns a cell based on a grid position/coordinates.
-    FGridCell* GetCellAtGrid(FIntPoint GridPos);
+    void DrawPath(const TArray<FVector>& Path, FColor Color = FColor::Yellow);
 
     class UWorld* World = nullptr;
 
@@ -104,9 +85,6 @@ protected:
 
 private:
 
-    TArray<FGridCell> Grid;
-
-    FIntPoint GridSize{ FIntPoint(0, 0) };
 
     // Last calculated path.
     TArray<FVector> LastPath;
@@ -115,12 +93,51 @@ private:
     TMap<char, float> CostMap;
 
 public:
-
-    float CellSize{ 100.f };
-
     FGridCell* CurrentStart{ nullptr };
     FGridCell* CurrentEnd{ nullptr };
+
+// TODO: EXTRACT ALL BELOW TO A NEW class Grid;
+public:
+
+    // Loads the grid from a file.
+    UFUNCTION(BlueprintCallable, Category = "Grid")
+    bool LoadGridFromFile(FString FilePath, FString CostConfigPath = "");
+
+    UFUNCTION(BlueprintCallable, Category = "Grid")
+    void SetupDefaultGrid(int32 GridSize_CellCountX = 10, int32 GridSize_CellCountY = 10, float CellSize = 100.0f);
+
+    UFUNCTION(BlueprintCallable, Category = "Grid")
+    void DrawGrid(bool bDrawCosts = true);
+
+    UFUNCTION(BlueprintCallable, Category = "Grid")
+    FVector GetGridSize() const { return GridSize; }
+
+    UFUNCTION(BlueprintCallable, Category = "Grid")
+    float GetCellSize() const { return CellSize; }
+
+    UFUNCTION(BlueprintCallable, Category = "Grid")
+    FVector GetGridOrigin() const { return GridOrigin; }
+
+    // Returns a cell based on a world location.
+    FGridCell* GetCellAtLocation(FVector Location);
+
+    // Returns a cell based on a grid position/coordinates.
+    FGridCell* GetCellAtGrid(FIntPoint GridPos);
+
+private:
+
+    TArray<FGridCell> Grid;
+
+    FIntPoint GridSize_CellCount{ FIntPoint(0, 0) };
+    
+    float CellSize{ 100.f };
     
     // Origin of the grid in world coordinates.
-    FVector GridOrigin{ FVector::ZeroVector };
+    FVector GridOrigin{ FVector(-500.f, 0.f, -400.f) };
+
+    FVector GridSize{ FVector(
+        GridSize_CellCount.X * CellSize - GridOrigin.X,
+        GridOrigin.Y,
+        GridSize_CellCount.Y * CellSize - GridOrigin.Z)
+    };
 };

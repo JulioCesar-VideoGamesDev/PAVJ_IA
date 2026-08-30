@@ -20,11 +20,20 @@ class MPV_PRACTICAS_API UPathFollowingSteering : public UObject, public ISteerin
     GENERATED_BODY()
 
 public:
-
     // Pointer the the AICharacter used to GetSteering.
     UPROPERTY()
-    TObjectPtr<AAICharacter> AICharacter;
+    TObjectPtr<AAICharacter> AICharacter{ nullptr };
 
+    UPROPERTY()
+    bool EnableObstacleAvoidance{ false };
+    
+    UPROPERTY()
+    float ObstacleAvoidanceStrength{ 0.f };
+    
+    UPROPERTY()
+    float ObstacleAvoidanceWeight{ 0.f };
+
+public:
     UFUNCTION(BlueprintCallable, Category = "Streering")
     virtual void GetSteering(FSteeringOutput& SteeringOutput) override;
 
@@ -33,6 +42,9 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Steering")
     void ResetPathFollowingWithPath(const TArray<FVector>& NewPath, bool bResetPosition = false);
+
+    UFUNCTION(BlueprintCallable, Category = "Steering")
+    TArray<FVector> GetPathPoints() const { return PathPoints; };
 
     UFUNCTION(BlueprintCallable, Category = "Steering")
     bool HasFinishedPath() const;
@@ -67,10 +79,4 @@ private:
 
     UPROPERTY()
     int32 CurrentSegment{ 0 }; // Each segment is the union of the previust PathPoint and the next PathPoint.
-
-public:
-
-    bool EnableObstacleAvoidance{ false };
-    float AvoidanceStrength{ 0.f };
-    float ObstacleAvoidanceWeight{ 0.f };
 };

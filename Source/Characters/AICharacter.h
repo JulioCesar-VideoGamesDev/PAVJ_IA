@@ -12,44 +12,6 @@
 
 #include "AICharacter.generated.h"
 
-// Linear velocity
-class USeekSteering;
-class UArriveSteering;
-
-// Angular velocity
-class UAlignSteering;
-class UAlignToMovementSteering;
-
-// Advanced Steerings
-class UPathFollowingSteering;
-class UObstacleAvoidanceSteering;
-
-// PathFinding
-class UPathFinder_Grid;
-class UPathFinder_NavMesh;
-
-UENUM(BlueprintType)
-enum class SteeringLinearVelocity : uint8
-{
-	Seek UMETA(DisplayName = "Seek"),
-	Arrive UMETA(DisplayName = "Arrive"),
-	PathFollowing UMETA(DisplayName = "PathFollowing")
-};
-
-UENUM(BlueprintType)
-enum class SteeringAngularVelocity : uint8
-{
-	Align UMETA(DisplayName = "Align"),
-	AlignToMovement UMETA(DisplayName = "AlignToMovement")
-};
-
-UENUM(BlueprintType)
-enum class PathFindingVersion : uint8
-{
-	Grid UMETA(DisplayName = "Grid"),
-	NavMesh UMETA(DisplayName = "NavMesh")
-};
-
 UCLASS()
 class MPV_PRACTICAS_API AAICharacter : public APawn
 {
@@ -59,6 +21,7 @@ public:
 	// Sets default values for this pawn's properties
 	AAICharacter();
 
+protected:
 	/**  */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AIChar)
 	uint32 bDoMovement : 1;
@@ -79,69 +42,11 @@ protected:
 	// Struct that stores all the params defined in Content/XMLs/params.xml
 	Params m_params;
 
+	UPROPERTY(EditDefaultsOnly, Category = "AICharacter")
+	FString m_params_filePath{ "" };
+
 	// Struct that stores all the points defined in Content/XMLs/paths.xml
 	Paths m_paths;
-	
-	// Enum to control which Steering of LinearVelocity are we using.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steerings|State")
-	SteeringLinearVelocity StateLinearVel{ SteeringLinearVelocity::PathFollowing };
-
-	// Enum to control which Steering of AngularVelocity are we using.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steerings|State")
-	SteeringAngularVelocity StateAngularVel{ SteeringAngularVelocity::AlignToMovement };
-	
-	// Enum to control which PathFinder are we using.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steerings|State")
-	PathFindingVersion PathFinderVersion{ PathFindingVersion::Grid };
-
-	UPROPERTY(EditDefaultsOnly, Category = "Steerings|Controllers")
-	bool bEnablePathfinding{ false };
-
-	// Enables the SetActorLocation on the leftclick callback.
-	UPROPERTY(EditDefaultsOnly, Category = "Steerings|Controllers")
-	bool bEnableLeftClickTP{ false };
-
-	// UObjectPtr for all the Steering Behaviors
-
-	UPROPERTY(BlueprintReadOnly, Category = "Steerings")
-	TObjectPtr<USeekSteering> SeekSteering;
-	
-	UPROPERTY(BlueprintReadOnly, Category = "Steerings")
-	TObjectPtr<UArriveSteering> ArriveSteering;
-	
-	UPROPERTY(BlueprintReadOnly, Category = "Steerings")
-	TObjectPtr<UAlignSteering> AlignSteering;
-	
-	UPROPERTY(BlueprintReadOnly, Category = "Steerings")
-	TObjectPtr<UAlignToMovementSteering> AlignToMovementSteering;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Steerings")
-	TObjectPtr<UPathFollowingSteering> PathFollowingSteering;
-	
-	UPROPERTY(EditDefaultsOnly, Category = "Steerings|PathFollowing")
-	bool bIsPathFollowingLooped{ false };
-
-	UPROPERTY(BlueprintReadOnly, Category = "Steerings")
-	TObjectPtr<UObstacleAvoidanceSteering> ObstacleAvoidanceSteering;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Steerings|PathFinder")
-	bool bEnableObstacleAvoidance{ false };
-
-	UPROPERTY(BlueprintReadOnly, Category = "PathFinder")
-	TObjectPtr<UPathFinder_Grid> PathFinder_Grid;
-	
-	UPROPERTY(EditDefaultsOnly, Category = "Steerings|PathFinder")
-	FVector GridOrigin { FVector::ZeroVector };
-
-	UPROPERTY(BlueprintReadOnly, Category = "PathFinder")
-	TObjectPtr<UPathFinder_NavMesh> PathFinder_NavMesh;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Steerings|PathFinder")
-	FString NavMeshPath{ "" };
-
-	FVector StartLocation{ FVector::ZeroVector };
-	FVector EndLocation{ FVector::ZeroVector };
-	bool bHaveEndLocation{ false };
 
 protected:
 
@@ -153,28 +58,24 @@ protected:
 
 	float angularVelocity{ 0.f };
 
-
 	TArray<FVector> PathPoints;
+
 	TArray<FObstacleAttr> ObstaclesArray;
+
+	UPROPERTY(EditDefaultsOnly, Category = "AICharacter")
+	FString ObstaclesArray_filePath{ "" };
 
 	FVector ClosestPoint;
 	FVector SeekPoint;
 	FVector PredictedPoint;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	UFUNCTION(BlueprintCallable, Category = "AIFunctions")
-	void OnClickedLeft(const FVector& mousePosition);
-	UFUNCTION(BlueprintCallable, Category = "AIFunctions")
-	void OnClickedRight(const FVector& mousePosition);
-
-	UFUNCTION(BlueprintCallable, Category = "AIFunctions")
-	void OnPressedSpace();
+	
+	virtual void DrawDebug();
+	
+	// FUNCTIONS FOR THE COMUNICATION WITH THE STEERINGS -------------------------------------------------------------------------------------------------------------------
 	
 	const Params& GetParams() const { return m_params; }
 
@@ -191,11 +92,8 @@ public:
 		axisAngle = convertTo360(axisAngle);
 		return axisAngle;
 	}
+
 	void SetActorAngle(float angle) { FRotator newRot(angle, 0.0f, 0.0f); SetActorRotation(newRot); }
-
-	void DrawDebug();
-
-	// FUNCTIONS FOR THE COMUNICATION WITH THE STEERINGS -------------------------------------------------------------------------------------------------------------------
 
 	FVector GetTargetPosition() const
 	{
