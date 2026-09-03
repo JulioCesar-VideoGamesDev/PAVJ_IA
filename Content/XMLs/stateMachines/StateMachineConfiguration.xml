@@ -3,7 +3,6 @@
     <!-- Global variables for conditions -->
     <Variables>
 		<Variable name="IdleTimer" type="float" value="0.0" />
-        <Variable name="DistanceToTargetActor" type="float" value="9999.0" />
         <Variable name="IsTargetActorInChaseRange" type="bool" value="false" />
         <Variable name="HasReachedTarget" type="bool" value="true" />
     </Variables>

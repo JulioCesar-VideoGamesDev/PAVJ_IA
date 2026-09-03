@@ -9,17 +9,22 @@ UPathFinder_Grid::UPathFinder_Grid()
     // Initialize map with default values
     CostMap.Add('.', 1.f);
     CostMap.Add('#', 0.f);  // Obstacle
-
-    if (!LoadGridFromFile("TXTs/grid_map.txt", "TXTs/grid_cost_config.txt"))
-    {
-        // If it fails we create the default grid.
-        SetupDefaultGrid(10, 10, 100.0f);
-        UE_LOG(LogTemp, Warning, TEXT("Using default grid."));
-    }
 }
 
 TArray<FVector> UPathFinder_Grid::FindPath(FVector StartLocation, FVector EndLocation)
 {
+    if (Grid.IsEmpty())
+    {
+        if (!LoadGridFromFile(GridMap_FilePath, CostConfig_FilePath))
+        {
+            // If it fails we create the default grid.
+            SetupDefaultGrid(10, 10, 100.0f);
+            UE_LOG(LogTemp, Warning, TEXT("Using default grid."));
+        }
+    }
+        
+    DrawGrid();
+
     LastPath.Empty();
 
     // We get the cells of the Start and the End.
@@ -351,6 +356,9 @@ FGridCell* UPathFinder_Grid::GetCellAtGrid(FIntPoint GridPos)
 void UPathFinder_Grid::DrawGrid(bool bDrawCosts)
 {
     if (!::IsValid(World)) World = GetWorld();
+    
+    if (GridDrawn) return;
+    GridDrawn = true;
 
     for (const FGridCell& Cell : Grid)
     {
@@ -382,23 +390,23 @@ void UPathFinder_Grid::DrawGrid(bool bDrawCosts)
         }
 
         // If it's the start of end cell, then set their respective color.
-        if (&Cell == CurrentStart)
+        /*if (&Cell == CurrentStart)
         {
             Color = FColor::Blue;
         }
         else if (&Cell == CurrentEnd)
         {
             Color = FColor::Red;
-        }
+        }*/
 
-        DrawDebugBox(World, Center, Extents, Color, false, -1.f, 0, 4.f);
+        DrawDebugBox(World, Center, Extents, Color, true, 0.f, 0, 4.f);
 
         // Draw cost if it's active.
-        if (bDrawCosts && Cell.bIsWalkable && Cell.Cost != 1.f)
+        /*if (bDrawCosts && Cell.bIsWalkable && Cell.Cost != 1.f)
         {
             FString CostStr = FString::SanitizeFloat(Cell.Cost);
             DrawDebugString(World, Center + FVector(0, 15.f, 0), CostStr, nullptr, FColor::White, -1.f, false, 0.5f);
-        }
+        }*/
     }
 }
 

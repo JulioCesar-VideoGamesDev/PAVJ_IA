@@ -4,9 +4,6 @@
 #include "UObject/NoExportTypes.h"
 #include "navMesh.generated.h"
 
-/**
- * Estructura para un punto 2D (X, Y)
- */
 USTRUCT(BlueprintType)
 struct FNavPoint2D
 {
@@ -26,13 +23,10 @@ struct FNavPoint2D
 
     FVector ToFVector(float Z = 0.0f) const
     {
-        return FVector(X, Z, Y);  // XZ es el plano horizontal, Y es altura
+        return FVector(X, Z, Y);
     }
 };
 
-/**
- * Estructura para una arista (segmento entre dos puntos)
- */
 USTRUCT(BlueprintType)
 struct FNavEdge
 {
@@ -64,7 +58,6 @@ struct FNavEdge
         );
     }
 
-    // Versión 3D para compatibilidad (con altura)
     FVector GetCenter3D(float Z = 0.0f) const
     {
         return FVector(
@@ -74,7 +67,6 @@ struct FNavEdge
         );
     }
 
-    // Mantener la versión original por compatibilidad
     FVector GetCenter(float Z = 0.0f) const
     {
         return GetCenter3D(Z);
@@ -86,9 +78,6 @@ struct FNavEdge
     }
 };
 
-/**
- * Estructura para un polígono del NavMesh
- */
 USTRUCT(BlueprintType)
 struct FNavPolygon
 {
@@ -100,13 +89,10 @@ struct FNavPolygon
     UPROPERTY(BlueprintReadWrite)
     int32 PolygonIndex = -1;
 
-    // Aristas del polígono
     TArray<FNavEdge> Edges;
 
-    // Índices de los polígonos vecinos (comparten arista)
     TArray<int32> NeighborIndices;
 
-    // Centro del polígono (para heurística)
     FNavPoint2D Center;
 
     FNavPolygon() {}
@@ -123,7 +109,7 @@ struct FNavPolygon
             Edges.Add(Edge);
         }
 
-        // Calcular centro
+        // Calculate center
         Center = FNavPoint2D(0.0f, 0.0f);
         for (const FNavPoint2D& Point : Points)
         {
@@ -136,7 +122,6 @@ struct FNavPolygon
 
     bool IsPointInside(const FNavPoint2D& Point) const
     {
-        // Algoritmo de ray casting para punto en polígono
         bool bInside = false;
         int32 j = Points.Num() - 1;
 
@@ -159,7 +144,6 @@ struct FNavPolygon
 
         const FNavEdge& Edge = Edges[EdgeIndex];
 
-        // Proyección del punto sobre el segmento
         FVector2D A(Edge.Start.X, Edge.Start.Y);
         FVector2D B(Edge.End.X, Edge.End.Y);
         FVector2D P(Point.X, Point.Y);
@@ -175,9 +159,6 @@ struct FNavPolygon
     }
 };
 
-/**
- * Enlace entre dos polígonos (arista compartida)
- */
 USTRUCT(BlueprintType)
 struct FNavLink
 {
@@ -187,10 +168,10 @@ struct FNavLink
     int32 StartPolygon = -1;
 
     UPROPERTY(BlueprintReadWrite)
-    int32 StartEdgeStart = -1;  // Índice del vértice inicial de la arista
+    int32 StartEdgeStart = -1;
 
     UPROPERTY(BlueprintReadWrite)
-    int32 StartEdgeEnd = -1;    // Índice del vértice final de la arista
+    int32 StartEdgeEnd = -1;
 
     UPROPERTY(BlueprintReadWrite)
     int32 EndPolygon = -1;
@@ -201,7 +182,6 @@ struct FNavLink
     UPROPERTY(BlueprintReadWrite)
     int32 EndEdgeEnd = -1;
 
-    // Arista compartida (calculada)
     FNavEdge SharedEdge;
 
     FNavLink() {}
@@ -215,8 +195,6 @@ struct FNavLink
         const FNavPolygon& StartPoly = Polygons[StartPolygon];
         const FNavPolygon& EndPoly = Polygons[EndPolygon];
 
-        // La arista compartida está definida por los puntos StartEdgeStart-End en el polígono de inicio
-        // y EndEdgeStart-End en el polígono de fin
         FNavPoint2D StartPoint = StartPoly.Points[StartEdgeStart];
         FNavPoint2D EndPoint = StartPoly.Points[StartEdgeEnd];
 
@@ -225,13 +203,10 @@ struct FNavLink
     }
 };
 
-/**
- * Nodo para el pathfinding A* sobre NavMesh
- */
 struct FNavMeshNode
 {
     int32 PolygonIndex = -1;
-    FNavPoint2D Position;  // El centro de la arista o punto de entrada
+    FNavPoint2D Position;
 
     float GCost = 0.0f;
     float HCost = 0.0f;

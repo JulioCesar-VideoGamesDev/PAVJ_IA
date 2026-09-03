@@ -9,10 +9,6 @@ UPathFinder_NavMesh::UPathFinder_NavMesh()
 {
 }
 
-// ============================================
-// CARGA DEL NAVMESH DESDE XML
-// ============================================
-
 bool UPathFinder_NavMesh::LoadNavMeshFromFile(FString FilePath)
 {
     FString FullPath = FPaths::ProjectContentDir() / FilePath;
@@ -20,50 +16,43 @@ bool UPathFinder_NavMesh::LoadNavMeshFromFile(FString FilePath)
 
     if (!FFileHelper::LoadFileToString(XMLContent, *FullPath))
     {
-        UE_LOG(LogTemp, Error, TEXT("NavMesh: No se pudo cargar el archivo: %s"), *FullPath);
+        UE_LOG(LogTemp, Error, TEXT("NavMesh: Could not load the file: %s"), *FullPath);
         return false;
     }
 
-    // Limpiar datos anteriores
     Polygons.Empty();
     Links.Empty();
     AdjacencyMap.Empty();
 
-    // Parsear el XML
     if (!ParseXML(XMLContent))
     {
-        UE_LOG(LogTemp, Error, TEXT("NavMesh: Error al parsear el archivo XML"));
+        UE_LOG(LogTemp, Error, TEXT("NavMesh: Error while parsing the XML file"));
         return false;
     }
 
-    // Construir mapa de adyacencia
     BuildAdjacencyMap();
 
-    UE_LOG(LogTemp, Log, TEXT("NavMesh: Cargado correctamente - %d polígonos, %d links"),
+    UE_LOG(LogTemp, Log, TEXT("NavMesh: Loaded correctly - %d poligons, %d links"),
         Polygons.Num(), Links.Num());
 
     return true;
 }
 
-// ============================================
-// PARSEO DEL XML
-// ============================================
-
 bool UPathFinder_NavMesh::ParseXML(const FString& XMLContent)
 {
-    // Usar el parser de XML de Unreal
+    // XML parser from Unreal.
     FXmlFile XmlFile;
 
     if (!XmlFile.LoadFile(XMLContent, EConstructMethod::ConstructFromBuffer))
     {
-        UE_LOG(LogTemp, Error, TEXT("NavMesh: Error al cargar el XML"));
+        UE_LOG(LogTemp, Error, TEXT("NavMesh: Error while loading the XML"));
         return false;
     }
 
     FXmlNode* RootNode = XmlFile.GetRootNode();
     if (!RootNode || RootNode->GetTag() != TEXT("navmesh"))
     {
-        UE_LOG(LogTemp, Error, TEXT("NavMesh: Root node no es 'navmesh'"));
+        UE_LOG(LogTemp, Error, TEXT("NavMesh: Root node isn't 'navmesh'"));
         return false;
     }
 
@@ -71,7 +60,7 @@ bool UPathFinder_NavMesh::ParseXML(const FString& XMLContent)
     FXmlNode* PolygonsNode = RootNode->FindChildNode(TEXT("polygons"));
     if (!PolygonsNode)
     {
-        UE_LOG(LogTemp, Error, TEXT("NavMesh: No se encontró el nodo 'polygons'"));
+        UE_LOG(LogTemp, Error, TEXT("NavMesh: Couldn't find node 'polygons'"));
         return false;
     }
 
@@ -92,7 +81,8 @@ bool UPathFinder_NavMesh::ParseXML(const FString& XMLContent)
 
             FNavPoint2D Point;
             Point.X = FCString::Atof(*PointNode->GetAttribute(TEXT("x")));
-            Point.Y = FCString::Atof(*PointNode->GetAttribute(TEXT("y"))); // I use "y " because the app that I use to generate it exports it with a space -_-
+            Point.Y = FCString::Atof(*PointNode->GetAttribute(TEXT("y")));
+            Point.Y *=  -1;
             NewPolygon.Points.Add(Point);
         }
 
@@ -100,7 +90,7 @@ bool UPathFinder_NavMesh::ParseXML(const FString& XMLContent)
         Polygons.Add(NewPolygon);
     }
 
-    // Parsear links
+    // Parse Links
     FXmlNode* LinksNode = RootNode->FindChildNode(TEXT("links"));
     if (LinksNode)
     {
@@ -136,10 +126,6 @@ bool UPathFinder_NavMesh::ParseXML(const FString& XMLContent)
     return true;
 }
 
-// ============================================
-// CONSTRUIR MAPA DE ADYACENCIA
-// ============================================
-
 void UPathFinder_NavMesh::BuildAdjacencyMap()
 {
     AdjacencyMap.Empty();
@@ -162,53 +148,48 @@ void UPathFinder_NavMesh::BuildAdjacencyMap()
     }
 }
 
-// ============================================
-// PATHFINDING A* SOBRE NAVMESH
-// ============================================
-
 TArray<FVector> UPathFinder_NavMesh::FindPath(FVector StartLocation, FVector EndLocation)
 {
     LastPath.Empty();
 
-    // Convertir a coordenadas 2D del NavMesh
+    // Convert to 2D coordinates from the NavMesh
     StartPoint2D = FNavPoint2D(StartLocation.X, StartLocation.Z);
     EndPoint2D = FNavPoint2D(EndLocation.X, EndLocation.Z);
 
-    // Encontrar polígonos que contienen los puntos
+    // Find polygons based on the positions.
     StartPolygonIndex = GetPolygonAtLocation(StartLocation);
     EndPolygonIndex = GetPolygonAtLocation(EndLocation);
 
     if (StartPolygonIndex < 0 || EndPolygonIndex < 0)
     {
-        UE_LOG(LogTemp, Warning, TEXT("NavMesh: Inicio o fin fuera del NavMesh"));
+        UE_LOG(LogTemp, Warning, TEXT("NavMesh: Start or End out of navmesh"));
         return LastPath;
     }
 
     if (StartPolygonIndex == EndPolygonIndex)
     {
-        // Mismo polígono: camino directo
+        // Same polygon so it's a straight line.
         LastPath.Add(StartLocation);
         LastPath.Add(EndLocation);
         return LastPath;
     }
 
-    // Ejecutar A* sobre los polígonos
+    // Execute A* with the polygons
     TArray<FNavPoint2D> PathPoints2D = AStarOnNavMesh(StartPolygonIndex, EndPolygonIndex,
         StartPoint2D, EndPoint2D);
 
     if (PathPoints2D.Num() < 2)
     {
-        UE_LOG(LogTemp, Warning, TEXT("NavMesh: No se encontró camino"));
+        UE_LOG(LogTemp, Warning, TEXT("NavMesh: couldn't find a path"));
         return LastPath;
     }
 
-    // Convertir a puntos 3D (usando Y = HeightOffset para el suelo)
     for (const FNavPoint2D& Point2D : PathPoints2D)
     {
         LastPath.Add(FVector(Point2D.X, HeightOffset, Point2D.Y));
     }
 
-    UE_LOG(LogTemp, Log, TEXT("NavMesh: Camino encontrado con %d puntos"), LastPath.Num());
+    UE_LOG(LogTemp, Log, TEXT("NavMesh: Path found with %d puntos"), LastPath.Num());
     return LastPath;
 }
 
@@ -220,7 +201,7 @@ TArray<FNavPoint2D> UPathFinder_NavMesh::AStarOnNavMesh(int32 StartPolygon, int3
     TArray<FNavMeshNode*> ClosedSet;
     TArray<FNavMeshNode> NodePool;
 
-    // Inicializar nodos
+    // Initialize nodes.
     for (int32 i = 0; i < Polygons.Num(); i++)
     {
         FNavMeshNode Node(i, Polygons[i].Center);
@@ -233,7 +214,7 @@ TArray<FNavPoint2D> UPathFinder_NavMesh::AStarOnNavMesh(int32 StartPolygon, int3
         NodePool.Add(Node);
     }
 
-    // Nodo inicial (posición de inicio)
+    // Initial Node
     FNavMeshNode* StartNode = &NodePool[StartPolygon];
     StartNode->Position = StartPos;
     StartNode->GCost = 0.0f;
@@ -242,13 +223,13 @@ TArray<FNavPoint2D> UPathFinder_NavMesh::AStarOnNavMesh(int32 StartPolygon, int3
     StartNode->bIsInOpenSet = true;
     OpenSet.Add(StartNode);
 
-    // Nodo final (posición de destino)
+    // Last Node
     FNavMeshNode* EndNode = &NodePool[EndPolygon];
     EndNode->Position = EndPos;
 
     while (!OpenSet.IsEmpty())
     {
-        // Encontrar nodo con menor FCost
+        // Find the node with less FCost.
         FNavMeshNode* Current = OpenSet[0];
         int32 CurrentIndex = 0;
         for (int32 i = 1; i < OpenSet.Num(); i++)
@@ -260,22 +241,22 @@ TArray<FNavPoint2D> UPathFinder_NavMesh::AStarOnNavMesh(int32 StartPolygon, int3
             }
         }
 
-        // Si llegamos al objetivo
+        // If we arrive at the Polygon target.
         if (Current->PolygonIndex == EndPolygon)
         {
             TArray<FNavPoint2D> Path = ReconstructPath(Current);
-            // Añadir el punto final exacto
+            // Set the exact end point.
             Path.Add(EndPos);
             return Path;
         }
 
-        // Mover de abiertos a cerrados
+        // Swap from open to closed
         OpenSet.RemoveAt(CurrentIndex);
         Current->bIsInOpenSet = false;
         Current->bIsInClosedSet = true;
         ClosedSet.Add(Current);
 
-        // Explorar vecinos
+        // Explore Neighbors
         TArray<int32> Neighbors = GetNeighbors(Current->PolygonIndex);
         for (int32 NeighborIndex : Neighbors)
         {
@@ -284,7 +265,7 @@ TArray<FNavPoint2D> UPathFinder_NavMesh::AStarOnNavMesh(int32 StartPolygon, int3
             if (Neighbor->bIsInClosedSet)
                 continue;
 
-            // Calcular el punto de entrada al polígono vecino
+            // Calculate the entry point to the Neighbor.
             FNavPoint2D EntryPoint = GetEntryPoint(Current->PolygonIndex, NeighborIndex, Current->Position);
 
             float MoveCost = Heuristic(Current->Position, EntryPoint);
@@ -300,7 +281,7 @@ TArray<FNavPoint2D> UPathFinder_NavMesh::AStarOnNavMesh(int32 StartPolygon, int3
                 continue;
             }
 
-            // Actualizar el mejor camino
+            // Update the best path.
             Neighbor->Parent = Current;
             Neighbor->Position = EntryPoint;
             Neighbor->GCost = TentativeG;
@@ -309,7 +290,6 @@ TArray<FNavPoint2D> UPathFinder_NavMesh::AStarOnNavMesh(int32 StartPolygon, int3
         }
     }
 
-    // No se encontró camino
     return TArray<FNavPoint2D>();
 }
 
@@ -323,8 +303,7 @@ TArray<FNavPoint2D> UPathFinder_NavMesh::ReconstructPath(FNavMeshNode* EndNode)
         Path.Add(Current->Position);
         Current = Current->Parent;
     }
-
-    // Invertir para tener inicio > fin
+    
     for (int32 i = 0; i < Path.Num() / 2; i++)
     {
         int32 j = Path.Num() - 1 - i;
@@ -335,10 +314,6 @@ TArray<FNavPoint2D> UPathFinder_NavMesh::ReconstructPath(FNavMeshNode* EndNode)
 
     return Path;
 }
-
-// ============================================
-// FUNCIONES AUXILIARES
-// ============================================
 
 TArray<int32> UPathFinder_NavMesh::GetNeighbors(int32 PolygonIndex) const
 {
@@ -356,7 +331,7 @@ FNavPoint2D UPathFinder_NavMesh::GetSharedEdgeCenter(int32 PolyA, int32 PolyB) c
         if ((Link.StartPolygon == PolyA && Link.EndPolygon == PolyB) ||
             (Link.StartPolygon == PolyB && Link.EndPolygon == PolyA))
         {
-            // Calcular el centro de la arista compartida
+            // Calculate the center of the shared edge.
             FNavPoint2D Center = Link.SharedEdge.Start;
             Center.X = (Center.X + Link.SharedEdge.End.X) * 0.5f;
             Center.Y = (Center.Y + Link.SharedEdge.End.Y) * 0.5f;
@@ -368,10 +343,10 @@ FNavPoint2D UPathFinder_NavMesh::GetSharedEdgeCenter(int32 PolyA, int32 PolyB) c
 
 FNavPoint2D UPathFinder_NavMesh::GetEntryPoint(int32 FromPolygon, int32 ToPolygon, const FNavPoint2D& Position) const
 {
-    // Obtener el centro de la arista compartida
+    // Get the center of the shared edge.
     FNavPoint2D EdgeCenter = GetSharedEdgeCenter(FromPolygon, ToPolygon);
 
-    // Si no encontramos la arista, usar el centro del polígono destino
+    // If we couldn't find the edge then use the center of the next Polygon.
     if (EdgeCenter.X == 0.0f && EdgeCenter.Y == 0.0f)
     {
         if (ToPolygon >= 0 && ToPolygon < Polygons.Num())
@@ -408,10 +383,6 @@ FVector UPathFinder_NavMesh::GetWorldPosition(const FNavPoint2D& Point, float Z)
     return FVector(Point.X, Z, Point.Y);
 }
 
-// ============================================
-// VISUALIZACIÓN EN DEBUGDRAW
-// ============================================
-
 TArray<TArray<FVector>> UPathFinder_NavMesh::GetNavMeshPolygons()
 {
     TArray<TArray<FVector>> Result;
@@ -441,7 +412,6 @@ void UPathFinder_NavMesh::DrawPath(const TArray<FVector>& Path, FColor Color)
 {
     if (!World || Path.Num() < 2) return;
 
-    // Dibujar líneas del camino
     for (int32 i = 0; i < Path.Num() - 1; i++)
     {
         FVector Start = Path[i];
@@ -452,7 +422,6 @@ void UPathFinder_NavMesh::DrawPath(const TArray<FVector>& Path, FColor Color)
         DrawDebugLine(World, Start, End, Color, false, -1.0f, 0, 5.0f);
     }
 
-    // Dibujar waypoints
     for (const FVector& Point : Path)
     {
         FVector Pos = Point;
@@ -460,7 +429,6 @@ void UPathFinder_NavMesh::DrawPath(const TArray<FVector>& Path, FColor Color)
         DrawDebugSphere(World, Pos, 8.0f, 8, Color, false, -1.0f, 0);
     }
 
-    // Marcar inicio y fin
     if (Path.Num() > 0)
     {
         FVector Start = Path[0];

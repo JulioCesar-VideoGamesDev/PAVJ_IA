@@ -65,6 +65,15 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "AICharacter")
 	FString ObstaclesArray_filePath{ "" };
 
+	UPROPERTY(EditDefaultsOnly, Category = "AICharacter|Pathfinding|Grid")
+	FString GridMap_FilePath{ "" };
+
+	UPROPERTY(EditDefaultsOnly, Category = "AICharacter|Pathfinding|Grid")
+	FString CostConfig_FilePath{ "" };
+
+	UPROPERTY(EditDefaultsOnly, Category = "AICharacter|Pathfinding|NavMesh")
+	FString NavMeshPath{ "" };
+
 	FVector ClosestPoint;
 	FVector SeekPoint;
 	FVector PredictedPoint;

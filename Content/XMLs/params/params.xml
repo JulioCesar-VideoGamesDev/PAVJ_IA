@@ -5,17 +5,17 @@
 		
 		<max_speed value="200"> </max_speed>
 		<max_acceleration value="50"> </max_acceleration>
-		<arrive_radius value="5"> </arrive_radius>
+		<arrive_radius value="10"> </arrive_radius>
 		<brake_min_speed value="25"> </brake_min_speed>
 		<targetPosition x="0" y="0" z="0"> </targetPosition>
 		
 		<max_angular_speed value="90"> </max_angular_speed>
 		<max_angular_acceleration value="15"> </max_angular_acceleration>
 		<angular_arrive_angle value="5"> </angular_arrive_angle>
-		<targetRotation value="0"> </targetRotation>
+		<targetRotation value="270"> </targetRotation>
 		
 		<!--PathFollowing-->
-		<look_ahead value="10"> </look_ahead>
+		<look_ahead value="20"> </look_ahead>
 		
 		<!--ObstacleAvoidance-->
 		<time_ahead value="0.5"> </time_ahead>

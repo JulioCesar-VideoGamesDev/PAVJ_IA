@@ -142,36 +142,22 @@ void UObstacleAvoidanceSteering::GetSteering(FSteeringOutput& SteeringOutput)
     }
 
     // Vector from the obstacle towards the closest point of our predicted trajectory.
-    
-    //const FVector Difference = FoundCollision.Difference.GetSafeNormal();
 
     const FVector ToObstacle =
         (Obstacle.Position - CurrentPosition).GetSafeNormal();
 
-    // Generate the two possible directions perpendicular to the collision.
-
-    /*FVector AvoidanceDirection =
-        FVector(
-            -Difference.Z,
-            0.f,
-            Difference.X
-        ).GetSafeNormal();*/
-
+    // Get the perpendicular Vector of our direction to the obstacle based on our vertical Axis.
+    // This ensures that we don't try to avoid the obstacle by going over it.
     FVector AvoidanceDirection = FVector::CrossProduct(ToObstacle, FVector(0.f, 1.f, 0.f));
 
     // Determine on which side of our movement direction the obstacle is.
-
-    /*const FVector ToObstacle =
-        (Obstacle.Position - CurrentPosition).GetSafeNormal();*/
-
     const float Cross =
         FVector::CrossProduct(
             AvoidanceDirection,
             ToObstacle).Y;
 
     // We want to move to the opposite side of the obstacle.
-
-    if (Cross > 0.f)
+    if (Cross < 0.f)
     {
         AvoidanceDirection *= -1.f;
     }

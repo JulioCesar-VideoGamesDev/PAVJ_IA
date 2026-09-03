@@ -10,7 +10,7 @@
 #include "paths/paths.h"
 #include "obstacles/obstacles.h"
 
-#include "SteeringCharacter.generated.h"
+#include "AICharacter_SteeringBehaviors.generated.h"
 
 // Linear velocity
 class USeekSteering;
@@ -53,13 +53,13 @@ enum class PathFindingVersion : uint8
 };
 
 UCLASS()
-class MPV_PRACTICAS_API ASteeringCharacter : public AAICharacter
+class MPV_PRACTICAS_API AAICharacter_SteeringBehaviors : public AAICharacter
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this pawn's properties
-	ASteeringCharacter();
+	AAICharacter_SteeringBehaviors();
 
 protected:
 	// Called when the game starts or when spawned
@@ -77,12 +77,15 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AICharacter|Steerings|State")
 	PathFindingVersion PathFinderVersion{ PathFindingVersion::Grid };
 
-	UPROPERTY(EditDefaultsOnly, Category = "AICharacter|Steerings|Controllers")
-	bool bEnablePathfinding{ false };
-
 	// Enables the SetActorLocation on the leftclick callback.
 	UPROPERTY(EditDefaultsOnly, Category = "AICharacter|Steerings|Controllers")
 	bool bEnableLeftClickTP{ false };
+
+	UPROPERTY(EditDefaultsOnly, Category = "AICharacter|Steerings|Controllers")
+	bool bEnableObstacleAvoidance{ false };
+
+	UPROPERTY(EditDefaultsOnly, Category = "AICharacter|Steerings|Controllers")
+	bool bEnablePathfinding{ false };
 
 	// UObjectPtr for all the Steering Behaviors
 
@@ -107,9 +110,6 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "AICharacter|Steerings")
 	TObjectPtr<UObstacleAvoidanceSteering> ObstacleAvoidanceSteering{ nullptr };
 
-	UPROPERTY(EditDefaultsOnly, Category = "AICharacter|Steerings|PathFinder")
-	bool bEnableObstacleAvoidance{ false };
-
 	// UObjectPtr for the PathFinders
 
 	UPROPERTY(BlueprintReadOnly, Category = "AICharacter|PathFinder")
@@ -117,9 +117,6 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "AICharacter|PathFinder")
 	TObjectPtr<UPathFinder_NavMesh> PathFinder_NavMesh{ nullptr };
-
-	UPROPERTY(EditDefaultsOnly, Category = "AICharacter|Steerings|PathFinder")
-	FString NavMeshPath{ "" };
 
 	FVector StartLocation{ FVector::ZeroVector };
 	FVector EndLocation{ FVector::ZeroVector };

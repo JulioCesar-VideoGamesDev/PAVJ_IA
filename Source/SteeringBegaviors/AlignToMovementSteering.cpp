@@ -35,7 +35,7 @@ void UAlignToMovementSteering::GetSteering(FSteeringOutput& SteeringOutput)
 
     // The direction we are moving towards is our target rotation.
     // This will cause that the AI aligns backwards if the velocity is oposite to the direction that its facing.
-    // const float TargetPitch = Velocity.Rotation().Pitch;
+    //const float TargetPitch = Velocity.Rotation().Pitch;
     
     // To ensure that we rotate to face the direction that we are moving.
     const float TargetPitch =

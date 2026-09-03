@@ -31,7 +31,8 @@ void UPathFollowingSteering::GetSteering(FSteeringOutput& SteeringOutput)
         ArriveDelegate->DoDrawDebug = false;
     }
 
-    if (!IsLooped && HasFinishedPath())
+    if ((!IsLooped && HasFinishedPath())
+        || bHasStopedPathFollowing)
     {
         // If we finished the path and we have an Arrive
         if (::IsValid(ArriveDelegate))
@@ -149,15 +150,6 @@ bool UPathFollowingSteering::HasFinishedPath() const
     // If we are not in the last segment then we are not even close to finished.
     if (CurrentSegment + 1 < PathPoints.Num())
         return false;
-
-    if (AICharacter->GetAICharacterCurrentVelocity().Length() <= KINDA_SMALL_NUMBER)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
 
     return AICharacter->GetAICharacterCurrentVelocity().Length() <= KINDA_SMALL_NUMBER;
 }

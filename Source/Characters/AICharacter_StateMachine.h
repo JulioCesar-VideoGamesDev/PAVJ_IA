@@ -28,12 +28,13 @@ protected:
 	virtual void SetupStateMachine();
 
 	virtual void RegisterStateCallbacks();
-public:
-
+	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
+	
 	// -------------------------------------------
+
+public:
 
 	// State Machine
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI_StateMachine")

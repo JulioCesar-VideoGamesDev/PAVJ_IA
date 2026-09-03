@@ -206,11 +206,9 @@ void AAICharacter_StateMachine::GenerateWanderTarget()
     float MaxZ = GridOrigin.Z + GridSize.Z;
 
     // Generate a random point within the grid area
-    // We align to grid cells for consistency
     float RandomX = FMath::RandRange(MinX, MaxX);
     float RandomZ = FMath::RandRange(MinZ, MaxZ);
 
-    // Keep Z at ground level (or use the character's current Z)
     float CurrentY = GetActorLocation().Y;
 
     WanderTarget = FVector(RandomX, CurrentY, RandomZ);

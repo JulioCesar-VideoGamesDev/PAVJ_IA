@@ -1,4 +1,4 @@
-#include "Characters/SteeringCharacter.h"
+#include "Characters/AICharacter_SteeringBehaviors.h"
 
 #include "debug/debugdraw.h"
 
@@ -19,14 +19,14 @@
 #include "PathFinding/PathFinder_NavMesh.h"
 
 // Sets default values
-ASteeringCharacter::ASteeringCharacter()
+AAICharacter_SteeringBehaviors::AAICharacter_SteeringBehaviors()
 {
 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 }
 
 // Called when the game starts or when spawned
-void ASteeringCharacter::BeginPlay()
+void AAICharacter_SteeringBehaviors::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -45,6 +45,9 @@ void ASteeringCharacter::BeginPlay()
 		{
 		case PathFindingVersion::Grid:
 			PathFinder_Grid = NewObject<UPathFinder_Grid>(this);
+			PathFinder_Grid->CostConfig_FilePath = CostConfig_FilePath;
+			PathFinder_Grid->GridMap_FilePath = GridMap_FilePath;
+			PathFinder_Grid->LoadGridFromFile(GridMap_FilePath, CostConfig_FilePath);
 
 			break;
 		case PathFindingVersion::NavMesh:
@@ -108,9 +111,9 @@ void ASteeringCharacter::BeginPlay()
 			PathFollowingSteering->DrawPath();
 			PathFollowingSteering->IsLooped = bIsPathFollowingLooped;
 
-			PathFollowingSteering->EnableObstacleAvoidance = bEnableObstacleAvoidance;
+			/*PathFollowingSteering->EnableObstacleAvoidance = bEnableObstacleAvoidance;
 			PathFollowingSteering->ObstacleAvoidanceWeight = m_params.obstacle_avoidance_weight;
-			PathFollowingSteering->ObstacleAvoidanceStrength = m_params.obstacle_avoidance_strength;
+			PathFollowingSteering->ObstacleAvoidanceStrength = m_params.obstacle_avoidance_strength;*/
 		}
 
 		break;
@@ -143,7 +146,7 @@ void ASteeringCharacter::BeginPlay()
 		break;
 	}
 
-	if (bEnableObstacleAvoidance && !::IsValid(PathFollowingSteering))
+	if (bEnableObstacleAvoidance)// && !::IsValid(PathFollowingSteering))
 	{
 		ObstacleAvoidanceSteering = NewObject<UObstacleAvoidanceSteering>(this);
 		ObstacleAvoidanceSteering->AICharacter = this;
@@ -154,7 +157,7 @@ void ASteeringCharacter::BeginPlay()
 }
 
 // Called every frame
-void ASteeringCharacter::Tick(float DeltaTime)
+void AAICharacter_SteeringBehaviors::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	current_angle = GetActorAngle();
@@ -246,12 +249,12 @@ void ASteeringCharacter::Tick(float DeltaTime)
 }
 
 // Called to bind functionality to input
-void ASteeringCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void AAICharacter_SteeringBehaviors::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
-void ASteeringCharacter::OnClickedLeft(const FVector& mousePosition)
+void AAICharacter_SteeringBehaviors::OnClickedLeft(const FVector& mousePosition)
 {
 	if (bEnableLeftClickTP) SetActorLocation(mousePosition);
 
@@ -287,7 +290,7 @@ void ASteeringCharacter::OnClickedLeft(const FVector& mousePosition)
 	}
 }
 
-void ASteeringCharacter::OnClickedRight(const FVector& mousePosition)
+void AAICharacter_SteeringBehaviors::OnClickedRight(const FVector& mousePosition)
 {
 	m_params.targetPosition = mousePosition;
 	if (::IsValid(SeekSteering))SeekSteering->TargetPosition = mousePosition;
@@ -326,7 +329,7 @@ void ASteeringCharacter::OnClickedRight(const FVector& mousePosition)
 	}
 }
 
-void ASteeringCharacter::OnPressedSpace()
+void AAICharacter_SteeringBehaviors::OnPressedSpace()
 {
 	if (::IsValid(PathFollowingSteering))
 	{
@@ -335,7 +338,7 @@ void ASteeringCharacter::OnPressedSpace()
 	}
 }
 
-void ASteeringCharacter::DrawDebug()
+void AAICharacter_SteeringBehaviors::DrawDebug()
 {
 	Super::DrawDebug();
 
@@ -345,11 +348,13 @@ void ASteeringCharacter::DrawDebug()
 
 		if (Polygons.Num() > 1)
 		{
-			TArray<TArray<FVector>> PolygonsTest = {
-				{ FVector(0.f, 0.f, 0.f), FVector(100.f, 0.f, 0.f), FVector(100.f, 0.f, 100.0f), FVector(0.f, 0.f, 200.0f) },
-				{ FVector(0.f, 0.f, 0.f), FVector(100.f, 0.f, 0.f), FVector(100.f, 0.f, 100.0f), FVector(0.f, 0.f, 200.0f) }
-			};
-			SetPolygons(this, TEXT("navmesh"), TEXT("mesh"), PolygonsTest, NavmeshMaterial);
+			SetPolygons(this, TEXT("navmesh"), TEXT("mesh"), Polygons, NavmeshMaterial);
+
+			//TArray<TArray<FVector>> PolygonsTest = {
+			//	{ FVector(0.f, 0.f, 0.f), FVector(100.f, 0.f, 0.f), FVector(100.f, 0.f, 100.0f), FVector(0.f, 0.f, 200.0f) },
+			//	{ FVector(0.f, 0.f, 0.f), FVector(100.f, 0.f, 0.f), FVector(100.f, 0.f, 100.0f), FVector(0.f, 0.f, 200.0f) }
+			//};
+			//SetPolygons(this, TEXT("navmesh"), TEXT("mesh"), PolygonsTest, NavmeshMaterial);
 		}
 	}
 }

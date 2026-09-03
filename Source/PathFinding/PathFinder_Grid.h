@@ -57,6 +57,12 @@ class MPV_PRACTICAS_API UPathFinder_Grid : public UObject
 public:
     UPathFinder_Grid();
 
+    UPROPERTY(EditDefaultsOnly, Category = "Pathfinding")
+    FString GridMap_FilePath{ "" };
+
+    UPROPERTY(EditDefaultsOnly, Category = "Pathfinding")
+    FString CostConfig_FilePath{ "" };
+
     // Finds a path between two points.
     UFUNCTION(BlueprintCallable, Category = "Pathfinding")
     TArray<FVector> FindPath(FVector StartLocation, FVector EndLocation);
@@ -108,6 +114,8 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Grid")
     void DrawGrid(bool bDrawCosts = true);
+
+    bool GridDrawn{ false };
 
     UFUNCTION(BlueprintCallable, Category = "Grid")
     FVector GetGridSize() const { return GridSize; }
