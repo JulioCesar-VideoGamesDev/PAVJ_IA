@@ -8,17 +8,15 @@
     </Variables>
 
     <States>
-        <!-- ============================================ -->
-        <!-- IDLE STATE                                   -->
-        <!-- Waits for a few seconds before wandering     -->
-        <!-- ============================================ -->
+        <!-- IDLE STATE -->
+        <!-- Waits for a few seconds before wandering -->
         <State name="Idle" minTime="0.1">
             <Transitions>
                 <!-- Transition 1: Go to Wander after waiting 3 seconds -->
                 <Transition destination="Wander" conditionType="FloatVariable">
                     <Parameter name="name" value="IdleTimer" />
                     <Parameter name="operator" value=">=" />
-                    <Parameter name="value" value="3.0" />
+                    <Parameter name="value" value="10.0" />
                 </Transition>
                 
                 <!-- Transition 2: Go to Chase immediately if player is in range -->
@@ -29,10 +27,8 @@
             </Transitions>
         </State>
 
-        <!-- ============================================ -->
-        <!-- WANDER STATE                                 -->
-        <!-- Chooses random point and walks there         -->
-        <!-- ============================================ -->
+        <!-- WANDER STATE -->
+        <!-- Chooses random point and walks there -->
         <State name="Wander" minTime="0.1">
             <Transitions>
                 <!-- Transition 1: Go back to Idle when reaching destination -->
@@ -49,10 +45,8 @@
             </Transitions>
         </State>
 
-        <!-- ============================================ -->
-        <!-- CHASE STATE                                  -->
-        <!-- Chases the player using pathfinding          -->
-        <!-- ============================================ -->
+        <!-- CHASE STATE -->
+        <!-- Chases the player using pathfinding -->
         <State name="Chase" minTime="0.1">
             <Transitions>
                 <!-- Transition 1: Go back to Idle if player leaves range -->

@@ -12,17 +12,20 @@ AAICharacter_StateMachine::AAICharacter_StateMachine()
     PrimaryActorTick.bCanEverTick = true;
 
     StateMachine = CreateDefaultSubobject<UStateMachine>(TEXT("StateMachine"));
-
-    PathFinder_Grid = CreateDefaultSubobject<UPathFinder_Grid>(TEXT("PathFinder"));
-    PathFollowingSteering = CreateDefaultSubobject<UPathFollowingSteering>(TEXT("PathFollowingBehaviour"));
-
-    //IdleDuration = 3.0f;
-    //ChaseRange = 20.0f;
 }
 
 void AAICharacter_StateMachine::BeginPlay()
 {
     Super::BeginPlay();
+
+    PathFinder_Grid = NewObject<UPathFinder_Grid>(this);
+    PathFinder_Grid->GridMap_FilePath = GridMap_FilePath;
+    PathFinder_Grid->CostConfig_FilePath = CostConfig_FilePath;
+    PathFinder_Grid->LoadGridFromFile(GridMap_FilePath, CostConfig_FilePath);
+    PathFollowingSteering = NewObject<UPathFollowingSteering>(this);
+
+    //IdleDuration = 3.0f;
+    //ChaseRange = 20.0f;
 
     TargetActor = UGameplayStatics::GetActorOfClass(GetWorld(), TargetActorClass);
 
@@ -197,7 +200,7 @@ void AAICharacter_StateMachine::GenerateWanderTarget()
     // Get the grid boundaries
     FVector GridOrigin = PathFinder_Grid->GetGridOrigin();
     FVector GridSize = FVector(PathFinder_Grid->GetGridSize().X, GridOrigin.Y, PathFinder_Grid->GetGridSize().Z);
-    float CellSize = PathFinder_Grid->GetCellSize();
+    //float CellSize = PathFinder_Grid->GetCellSize();
 
     // Calculate the minimum and maximum coordinates of the grid
     float MinX = GridOrigin.X;
