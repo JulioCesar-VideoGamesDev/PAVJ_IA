@@ -29,6 +29,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "StateMachine")
     bool Start(const FString& InitialState);
 
+    UPROPERTY(EditDefaultsOnly, Category = "StateMachine")
+    bool UpdateWithTickComponent{ false };
+
     UFUNCTION(BlueprintCallable, Category = "StateMachine")
     void Update(float DeltaTime);
 

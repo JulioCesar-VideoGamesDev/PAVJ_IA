@@ -3,12 +3,13 @@
 
 void UBaseState::OnEnter_Implementation()
 {
-    //TimeInState = 0.0f;
+    TimeInState = 0.f;
     //UE_LOG(LogTemp, Log, TEXT("Entering state: %s"), *Name);
 }
 
 void UBaseState::OnExit_Implementation()
 {
+    TimeInState = 0.f;
     //UE_LOG(LogTemp, Log, TEXT("Exiting state: %s"), *Name);
 }
 

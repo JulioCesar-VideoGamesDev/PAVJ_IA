@@ -17,7 +17,7 @@ void UStateMachine::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-    Update(DeltaTime);
+    if (UpdateWithTickComponent) Update(DeltaTime);
 }
 
 bool UStateMachine::LoadFromXML(const FString& FilePath)
@@ -307,7 +307,7 @@ void UStateMachine::Update(float DeltaTime)
         OnUpdateCallbacks[CurrentState->Name].Execute(DeltaTime);
     }
 
-    // Call state's OnUpdate
+    // To increment the TimeInState
     CurrentState->OnUpdate(DeltaTime);
 
     // Check transitions

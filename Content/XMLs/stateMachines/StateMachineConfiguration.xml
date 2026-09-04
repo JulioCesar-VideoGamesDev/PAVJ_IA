@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <StateMachine>
     <!-- Global variables for conditions -->
     <Variables>
@@ -9,17 +8,14 @@
 
     <States>
         <!-- IDLE STATE -->
-        <!-- Waits for a few seconds before wandering -->
         <State name="Idle" minTime="0.1">
             <Transitions>
-                <!-- Transition 1: Go to Wander after waiting 3 seconds -->
                 <Transition destination="Wander" conditionType="FloatVariable">
                     <Parameter name="name" value="IdleTimer" />
                     <Parameter name="operator" value=">=" />
-                    <Parameter name="value" value="10.0" />
+                    <Parameter name="value" value="5.0" />
                 </Transition>
                 
-                <!-- Transition 2: Go to Chase immediately if player is in range -->
                 <Transition destination="Chase" conditionType="BoolVariable">
                     <Parameter name="name" value="IsTargetActorInChaseRange" />
                     <Parameter name="value" value="true" />
@@ -28,16 +24,13 @@
         </State>
 
         <!-- WANDER STATE -->
-        <!-- Chooses random point and walks there -->
         <State name="Wander" minTime="0.1">
             <Transitions>
-                <!-- Transition 1: Go back to Idle when reaching destination -->
                 <Transition destination="Idle" conditionType="BoolVariable">
                     <Parameter name="name" value="HasReachedTarget" />
                     <Parameter name="value" value="true" />
                 </Transition>
                 
-                <!-- Transition 2: Go to Chase if player is detected -->
                 <Transition destination="Chase" conditionType="BoolVariable">
                     <Parameter name="name" value="IsTargetActorInChaseRange" />
                     <Parameter name="value" value="true" />
@@ -46,10 +39,8 @@
         </State>
 
         <!-- CHASE STATE -->
-        <!-- Chases the player using pathfinding -->
         <State name="Chase" minTime="0.1">
             <Transitions>
-                <!-- Transition 1: Go back to Idle if player leaves range -->
                 <Transition destination="Idle" conditionType="BoolVariable">
                     <Parameter name="name" value="IsTargetActorInChaseRange" />
                     <Parameter name="value" value="false" />

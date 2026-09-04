@@ -156,6 +156,13 @@ bool UPathFollowingSteering::HasFinishedPath() const
 
 void UPathFollowingSteering::StopPathFollowing()
 {
+    TArray<FVector> newPath =
+    {
+        AICharacter->GetActorLocation(),
+        AICharacter->GetActorLocation()
+    };
+    ResetPathFollowingWithPath(newPath);
+
     bHasStopedPathFollowing = true;
 
     if (ArriveDelegate)

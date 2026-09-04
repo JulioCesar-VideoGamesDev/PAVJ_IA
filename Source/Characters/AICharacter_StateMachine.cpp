@@ -24,9 +24,6 @@ void AAICharacter_StateMachine::BeginPlay()
     PathFinder_Grid->LoadGridFromFile(GridMap_FilePath, CostConfig_FilePath);
     PathFollowingSteering = NewObject<UPathFollowingSteering>(this);
 
-    //IdleDuration = 3.0f;
-    //ChaseRange = 20.0f;
-
     TargetActor = UGameplayStatics::GetActorOfClass(GetWorld(), TargetActorClass);
 
     if (!::IsValid(TargetActor)) UE_LOG(LogTemp, Error, TEXT("TargetActor NOT FOUND"));
@@ -48,7 +45,7 @@ void AAICharacter_StateMachine::SetupSteeringBehaviours()
 
 void AAICharacter_StateMachine::SetupStateMachine()
 {
-    if (!StateMachine)
+    if (!::IsValid(StateMachine))
         return;
 
     if (StateMachine->LoadFromXML(TEXT("XMLs/StateMachines/StateMachineConfiguration.xml")))
@@ -105,11 +102,11 @@ void AAICharacter_StateMachine::Tick(float DeltaTime)
     // Update the state machine to change the current state in case we have to.
     StateMachine->Update(DeltaTime);
 
-    TObjectPtr<UBaseState> CurrentState = StateMachine->CurrentState;
-    FString NameCurrentState = CurrentState->Name;
+    /*TObjectPtr<UBaseState> CurrentState = StateMachine->CurrentState;
+    FString NameCurrentState = CurrentState->Name;*/
 
     FSteeringOutput Steering = FSteeringOutput();
-    if (NameCurrentState != "Idle" && ::IsValid(PathFollowingSteering) && PathFollowingSteering->GetPathPoints().Num() >= 2)
+    if (::IsValid(PathFollowingSteering) && PathFollowingSteering->GetPathPoints().Num() >= 2)
     {
         PathFollowingSteering->GetSteering(Steering);
 
@@ -130,6 +127,7 @@ void AAICharacter_StateMachine::Tick(float DeltaTime)
 void AAICharacter_StateMachine::OnEnterIdle()
 {
     IdleTimer = 0.0f;
+    if (::IsValid(PathFollowingSteering)) PathFollowingSteering->StopPathFollowing();
     UE_LOG(LogTemp, Log, TEXT("Entering Idle state"));
 }
 
@@ -146,11 +144,14 @@ void AAICharacter_StateMachine::OnExitIdle()
 
 void AAICharacter_StateMachine::OnEnterWander()
 {
-    GenerateWanderTarget();
+    while (PathFollowingSteering->HasFinishedPath())
+    {
+        GenerateWanderTarget();
 
-    // Find path to wander target
-    TArray<FVector> Path = PathFinder_Grid->FindPath(GetActorLocation(), WanderTarget);
-    PathFollowingSteering->ResetPathFollowingWithPath(Path);
+        // Find path to wander target
+        TArray<FVector> Path = PathFinder_Grid->FindPath(GetActorLocation(), WanderTarget);
+        PathFollowingSteering->ResetPathFollowingWithPath(Path);    
+    }
 
     UE_LOG(LogTemp, Log, TEXT("Entering Wander state - Target: %s"), *WanderTarget.ToString());
 }
@@ -187,11 +188,12 @@ void AAICharacter_StateMachine::OnUpdateChase(const float DeltaTime)
 void AAICharacter_StateMachine::OnExitChase()
 {
     UE_LOG(LogTemp, Log, TEXT("Exiting Chase state"));
+    if (::IsValid(PathFollowingSteering)) PathFollowingSteering->StopPathFollowing();
 }
 
 void AAICharacter_StateMachine::GenerateWanderTarget()
 {
-    if (!PathFinder_Grid)
+    if (!::IsValid(PathFinder_Grid))
     {
         UE_LOG(LogTemp, Warning, TEXT("PathFinder_Grid is null, cannot generate wander target"));
         return;
