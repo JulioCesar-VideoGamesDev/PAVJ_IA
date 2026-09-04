@@ -298,28 +298,14 @@ void UStateMachine::Update(float DeltaTime)
     if (!CurrentState)
         return;
 
-    // Update time in state
-    CurrentState->TimeInState += DeltaTime;
-
     // Call Update callback for current state
     if (OnUpdateCallbacks.Contains(CurrentState->Name) && OnUpdateCallbacks[CurrentState->Name].IsBound())
     {
         OnUpdateCallbacks[CurrentState->Name].Execute(DeltaTime);
     }
-
-    // To increment the TimeInState
+    
+    // To increment the TimeInState and check the transitions
     CurrentState->OnUpdate(DeltaTime);
-
-    // Check transitions
-    const TMap<FString, TFunction<bool()>>& Transitions = CurrentState->GetTransitions();
-    for (const auto& Transition : Transitions)
-    {
-        if (Transition.Value())
-        {
-            TransitionTo(Transition.Key);
-            return;
-        }
-    }
 }
 
 void UStateMachine::TransitionTo(const FString& NewState)
